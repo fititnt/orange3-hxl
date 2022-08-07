@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <scheme description="" title="Example Workflow" version="2.0">
 	<nodes>
-		<node id="0" name="Example Widget" position="(129.0, 126.0)" project_name="Orange3-Example-Add-on" qualified_name="orangecontrib.example.widgets.mywidget.MyWidget" title="Example Widget" version="" />
+		<node id="0" name="Example Widget" position="(129.0, 126.0)" project_name="Orange3-Example-Add-on" qualified_name="orangecontrib.hxl.widgets.mywidget.MyWidget" title="Example Widget" version="" />
 	</nodes>
 	<links />
 	<annotations>

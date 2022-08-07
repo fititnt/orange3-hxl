@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+# @example https://github.com/mkinney/pytest-qt-example
+
 # pytest ./orange-via-cli.py
-# pytest -W ignore::DeprecationWarning ./orange-via-cli.py
+# pytest -W ignore::DeprecationWarning -W ignore::RuntimeWarning ./orange-via-cli.py
 
 # pip install pytest-qt
 # pip install pytest-bdd
@@ -9,23 +11,23 @@ import pytest
 
 from Orange.canvas.__main__ import main
 
-class Fruit:
-    def __init__(self, name):
-        self.name = name
+import os
+import sys
+import pytest
 
-    def __eq__(self, other):
-        return self.name == other.name
+from PyQt5 import QtGui, QtCore, QtWidgets, QtTest
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import QCoreApplication, Qt, QObject
 
-
-@pytest.fixture
-def my_fruit():
-    return Fruit("appleqq")
+from pytestqt.plugin import QtBot
 
 
-@pytest.fixture
-def fruit_basket(my_fruit):
-    return [Fruit("banana"), my_fruit]
+def test_hello(qtbot):
+    """test clicking changes a label"""
+    widget = main()
+    qtbot.addWidget(widget)
 
+    # click in the Greet button and make sure it updates the appropriate label
+    # qtbot.mouseClick(widget.button_greet, qt_api.QtCore.Qt.MouseButton.LeftButton)
 
-def test_my_fruit_in_basket(my_fruit, fruit_basket):
-    assert my_fruit in fruit_basket
+    # assert widget.greet_label.text() == "Hello!"

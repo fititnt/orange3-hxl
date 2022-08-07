@@ -38,3 +38,8 @@ or
 The new widget appears in the toolbox bar under the section Example.
 
 ![screenshot](https://github.com/biolab/orange3-example-addon/blob/master/screenshot.png)
+
+
+<!--
+orange-canvas --no-welcome --no-splash
+-->

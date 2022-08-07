@@ -5,12 +5,12 @@ from os import path, walk
 import sys
 from setuptools import setup, find_packages
 
-NAME = "Orange3 Example Add-on"
+NAME = "Orange3 HXL Add-on"
 
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 
 AUTHOR = 'Bioinformatics Laboratory, FRI UL'
-AUTHOR_EMAIL = 'contact@orange.biolab.si'
+AUTHOR_EMAIL = 'rocha@ieee.org'
 
 URL = 'http://orange.biolab.si/download'
 DESCRIPTION = "Add-on containing example widgets"
@@ -28,8 +28,8 @@ KEYWORDS = (
 PACKAGES = find_packages()
 
 PACKAGE_DATA = {
-    'orangecontrib.example': ['tutorials/*.ows'],
-    'orangecontrib.example.widgets': ['icons/*'],
+    'orangecontrib.hxl': ['tutorials/*.ows'],
+    'orangecontrib.hxl.widgets': ['icons/*'],
 }
 
 DATA_FILES = [
@@ -44,31 +44,31 @@ ENTRY_POINTS = {
     # Entry points that marks this package as an orange add-on. If set, addon will
     # be shown in the add-ons manager even if not published on PyPi.
     'orange3.addon': (
-        'example = orangecontrib.example',
+        'hxl = orangecontrib.hxl',
     ),
     # Entry point used to specify packages containing tutorials accessible
     # from welcome screen. Tutorials are saved Orange Workflows (.ows files).
     'orange.widgets.tutorials': (
         # Syntax: any_text = path.to.package.containing.tutorials
-        'exampletutorials = orangecontrib.example.tutorials',
+        'hxltutorials = orangecontrib.hxl.tutorials',
     ),
 
     # Entry point used to specify packages containing widgets.
     'orange.widgets': (
         # Syntax: category name = path.to.package.containing.widgets
         # Widget category specification can be seen in
-        #    orangecontrib/example/widgets/__init__.py
-        'Examples = orangecontrib.example.widgets',
+        #    orangecontrib/hxl/widgets/__init__.py
+        'HXL = orangecontrib.hxl.widgets',
     ),
 
     # Register widget help
     "orange.canvas.help": (
-        'html-index = orangecontrib.example.widgets:WIDGET_HELP_PATH',)
+        'html-index = orangecontrib.hxl.widgets:WIDGET_HELP_PATH',)
 }
 
 NAMESPACE_PACKAGES = ["orangecontrib"]
 
-TEST_SUITE = "orangecontrib.example.tests.suite"
+TEST_SUITE = "orangecontrib.hxl.tests.suite"
 
 
 def include_documentation(local_dir, install_dir):
