@@ -1,12 +1,15 @@
-Orange3 Example Add-on
-======================
+# Orange3 HXL Add-on
 
+This is an early draft of [Orange3](http://orange.biolab.si) add-on with minimal
+awareness of data labeled with [HXL](https://hxlstandard.org/).
+
+<!--
 This is an example add-on for [Orange3](http://orange.biolab.si). Add-on can extend Orange either 
 in scripting or GUI part, or in both. We here focus on the GUI part and implement a simple (empty) widget,
 register it with Orange and add a new workflow with this widget to example tutorials.
+-->
 
-Installation
-------------
+## Installation
 
 To install the add-on from source run
 
@@ -23,8 +26,8 @@ Documentation / widget help can be built by running
 
 from the doc directory.
 
-Usage
------
+## Usage
+
 
 After the installation, the widget from this add-on is registered with Orange. To run Orange from the terminal,
 use
@@ -37,9 +40,16 @@ or
 
 The new widget appears in the toolbox bar under the section Example.
 
-![screenshot](https://github.com/biolab/orange3-example-addon/blob/master/screenshot.png)
+![screenshot](https://raw.githubusercontent.com/biolab/orange3-example-addon/master/screenshot.png)
 
+
+## TODOs
+
+- (...)
 
 <!--
 orange-canvas --no-welcome --no-splash
+
+pip install orange3 Orange3-Geo Orange3-Timeseries orange3-text
+pip install Orange3-Survival-Analysis
 -->

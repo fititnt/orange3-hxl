@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 NAME = "Orange3 HXL Add-on"
 
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 
 AUTHOR = 'Bioinformatics Laboratory, FRI UL'
 AUTHOR_EMAIL = 'rocha@ieee.org'
@@ -22,7 +22,7 @@ LICENSE = "BSD"
 KEYWORDS = (
     # [PyPi](https://pypi.python.org) packages with keyword "orange3 add-on"
     # can be installed using the Orange Add-on Manager
-    'orange3 add-on',
+    'orange3 add-on hxl',
 )
 
 PACKAGES = find_packages()
