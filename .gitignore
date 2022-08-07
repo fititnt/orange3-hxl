@@ -18,3 +18,5 @@ __pycache__
 .pydevproject
 .settings/*
 .DS_Store
+
+# orange-via-cli.py
