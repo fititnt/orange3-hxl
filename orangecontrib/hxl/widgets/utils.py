@@ -5,17 +5,17 @@
 def wkt_point_split(text: str) -> tuple:
     """wkt_point_split"""
     if not text:
-        # return [None, None]
-        return ['', '']
+        return [None, None]
+        # return ['', '']
     if not text.startswith('Point('):
-        # return [None, None]
-        return ['', '']
+        return [None, None]
+        # return ['', '']
 
     text_core = text.replace('Point(', '').replace(')', '')
     # @TODO what if have z component? Not implemented
     parts = text_core.split(' ')
-    # return [float(parts[0]), float(parts[1])]
-    return text_core.split(' ')
+    return [float(parts[0]), float(parts[1])]
+    # return text_core.split(' ')
 
 
 class WKTPointSplit:
