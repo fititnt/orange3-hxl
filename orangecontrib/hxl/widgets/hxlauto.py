@@ -7,6 +7,8 @@ from Orange.widgets.widget import OWWidget, Input, Output, Msg
 from Orange.data import Table, Domain, DiscreteVariable, StringVariable
 from Orange.data.util import SharedComputeValue, get_unique_names
 
+from .utils import *
+
 log = logging.getLogger(__name__)
 
 
@@ -124,41 +126,6 @@ class HXLAuto(OWWidget):
     def send_report(self):
         # self.report_plot() includes visualizations in the report
         self.report_caption(self.label)
-
-
-def wkt_point_split(text: str) -> tuple:
-    if not text:
-        return ['', '']
-    if not text.startswith('Point('):
-        return ['', '']
-    text_core = text.replace('Point(', '').replace(')')
-    # @TODO what if have z component? Not implemented
-    return text_core.split(' ')
-
-
-class WKTPointSplit:
-    def __init__(self, data, attr, delimiter=' '):
-        self.attr = attr
-        self.delimiter = delimiter
-
-        column = self.get_string_values(data, self.attr)
-        values = [s.split(self.delimiter) for s in column]
-        self.new_values = tuple(sorted({val if val else "?" for vals in
-                                        values for val in vals}))
-
-    def __eq__(self, other):
-        return self.attr == other.attr and self.delimiter == \
-            other.delimiter and self.new_values == other.new_values
-
-    def __hash__(self):
-        return hash((self.attr, self.delimiter, self.new_values))
-
-    def __call__(self, data):
-        column = self.get_string_values(data, self.attr)
-        values = [set(s.split(self.delimiter)) for s in column]
-        shared_data = {v: [i for i, xs in enumerate(values) if v in xs] for v
-                       in self.new_values}
-        return shared_data
 
     @staticmethod
     def get_string_values(data, var):
