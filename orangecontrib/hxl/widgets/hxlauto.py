@@ -1,9 +1,11 @@
+import numpy as np
 import logging
 from Orange.data import Table
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
-
+from Orange.data import Table, Domain, DiscreteVariable, StringVariable
+from Orange.data.util import SharedComputeValue, get_unique_names
 
 log = logging.getLogger(__name__)
 
@@ -84,11 +86,107 @@ class HXLAuto(OWWidget):
         log.exception('type(self.data)')
         log.exception(type(self.data))
 
-        self.Outputs.data.send(self.data)
+        # new_attribute = 'latitude'
+        # new_column = ['aa'] * 200
+        # old_domain = self.data
+        # domain = Domain(old_domain.attributes + [new_attribute],
+        #                 old_domain.class_vars,
+        #                 old_domain.metas)
+        # # table = data.transform(domain)
+        # table = self.data.transform(domain)
+        # table[:, new_attribute] = new_column
+
+        var = 'qcc-Zxxx-r-pWDATA-pp625-ps5000-x-zzwgs84point'
+        column = self.data.get_column_view(var)[0]
+        sc = WKTPointSplit(self.data, var)
+
+        log.exception('sc')
+        log.exception(sc)
+
+        new_columns = tuple(DiscreteVariable(
+            get_unique_names(self.data.domain, v), values=("0", "1"),
+            compute_value=OneHotStrings(sc, v)
+        ) for v in sc.new_values)
+        # new_columns = tuple(DiscreteVariable("1") for v in sc.new_values)
+
+        # log.exception('new_columns')
+        # log.exception(new_columns)
+
+        new_domain = Domain(
+            self.data.domain.attributes + new_columns,
+            self.data.domain.class_vars, self.data.domain.metas
+        )
+        extended_data = self.data.transform(new_domain)
+        self.Outputs.data.send(extended_data)
+
+        # self.Outputs.data.send(self.data)
 
     def send_report(self):
         # self.report_plot() includes visualizations in the report
         self.report_caption(self.label)
+
+
+def wkt_point_split(text: str) -> tuple:
+    if not text:
+        return ['', '']
+    if not text.startswith('Point('):
+        return ['', '']
+    text_core = text.replace('Point(', '').replace(')')
+    # @TODO what if have z component? Not implemented
+    return text_core.split(' ')
+
+
+class WKTPointSplit:
+    def __init__(self, data, attr, delimiter=' '):
+        self.attr = attr
+        self.delimiter = delimiter
+
+        column = self.get_string_values(data, self.attr)
+        values = [s.split(self.delimiter) for s in column]
+        self.new_values = tuple(sorted({val if val else "?" for vals in
+                                        values for val in vals}))
+
+    def __eq__(self, other):
+        return self.attr == other.attr and self.delimiter == \
+            other.delimiter and self.new_values == other.new_values
+
+    def __hash__(self):
+        return hash((self.attr, self.delimiter, self.new_values))
+
+    def __call__(self, data):
+        column = self.get_string_values(data, self.attr)
+        values = [set(s.split(self.delimiter)) for s in column]
+        shared_data = {v: [i for i, xs in enumerate(values) if v in xs] for v
+                       in self.new_values}
+        return shared_data
+
+    @staticmethod
+    def get_string_values(data, var):
+        # turn discrete to string variable
+        column = data.get_column_view(var)[0]
+        # if var.is_discrete:
+        #     return [var.str_val(x) for x in column]
+        return column
+
+
+class OneHotStrings(SharedComputeValue):
+
+    def __init__(self, fn, new_feature):
+        super().__init__(fn)
+        self.new_feature = new_feature
+
+    def __eq__(self, other):
+        return self.compute_shared == other.compute_shared \
+            and self.new_feature == other.new_feature
+
+    def __hash__(self):
+        return hash((self.compute_shared, self.new_feature))
+
+    def compute(self, data, shared_data):
+        indices = shared_data[self.new_feature]
+        col = np.zeros(len(data))
+        col[indices] = 1
+        return col
 
 
 if __name__ == "__main__":
