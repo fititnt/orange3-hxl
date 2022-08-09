@@ -43,42 +43,42 @@ class WKTPointSplit:
         #     return [var.str_val(x) for x in column]
         return column
 
-# class _DataType:
-#     def __eq__(self, other):
-#         """Equal if `other` has the same type and all elements compare equal."""
-#         if type(self) is not type(other):
-#             return False
-#         return super().__eq__(other)
+class _DataType:
+    def __eq__(self, other):
+        """Equal if `other` has the same type and all elements compare equal."""
+        if type(self) is not type(other):
+            return False
+        return super().__eq__(other)
 
-#     def __ne__(self, other):
-#         return not self == other
+    def __ne__(self, other):
+        return not self == other
 
-#     def __hash__(self):
-#         return hash((type(self), super().__hash__()))
+    def __hash__(self):
+        return hash((type(self), super().__hash__()))
 
-#     def name_type(self):
-#         """
-#         Returns a tuple with name and type of the variable.
-#         It is used since it is forbidden to use names of variables in settings.
-#         """
-#         type_number = {
-#             "Categorical": 0,
-#             "Real": 2,
-#             "Time": 3,
-#             "String": 4
-#         }
-#         return self.name, type_number[type(self).__name__]
+    def name_type(self):
+        """
+        Returns a tuple with name and type of the variable.
+        It is used since it is forbidden to use names of variables in settings.
+        """
+        type_number = {
+            "Categorical": 0,
+            "Real": 2,
+            "Time": 3,
+            "String": 4
+        }
+        return self.name, type_number[type(self).__name__]
 
-# # From Orange/widgets/data/oweditdomain.py
-# class Rename(_DataType, namedtuple("Rename", ["name"])):
-#     """
-#     Rename a variable.
+# From Orange/widgets/data/oweditdomain.py
+class Rename(_DataType, namedtuple("Rename", ["name"])):
+    """
+    Rename a variable.
 
-#     Parameters
-#     ----------
-#     name : str
-#         The new name
-#     """
-#     def __call__(self, var):
-#         # type: (Variable) -> Variable
-#         return var._replace(name=self.name)
+    Parameters
+    ----------
+    name : str
+        The new name
+    """
+    def __call__(self, var):
+        # type: (Variable) -> Variable
+        return var._replace(name=self.name)
