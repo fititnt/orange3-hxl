@@ -1,16 +1,23 @@
+"""HXLShortNames
+"""
+
 import logging
 
-from Orange.data import Table
+# from Orange.data import Table
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
-from Orange.data import Table, Domain, DiscreteVariable, StringVariable
+# from Orange.data import Table, Domain, DiscreteVariable, StringVariable
+from Orange.data import Table, Domain
+
+from orangecontrib.hxl.widgets.utils import bcp47_shortest_name
 
 log = logging.getLogger(__name__)
 
 
 class HXLShortNames(OWWidget):
+    """HXLShortNames"""
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
     name = "HXL short names"
@@ -27,15 +34,18 @@ class HXLShortNames(OWWidget):
     auto_apply = Setting(True)
 
     class Inputs:
+        """Inputs"""
         # specify the name of the input and the type
         data = Input("Data", Table)
 
     class Outputs:
+        """Outputs"""
         # if there are two or more outputs, default=True marks the default output
         data = Output("Data", Table, default=True)
 
     # same class can be initiated for Error and Information messages
     class Warning(OWWidget.Warning):
+        """Warning"""
         warning = Msg("My warning!")
 
     def __init__(self):
@@ -46,36 +56,14 @@ class HXLShortNames(OWWidget):
             self.controlArea, self, "label", box="Text", callback=self.commit)
 
     @Inputs.data
-    def set_data(self, data):
+    def set_data(self, data):  # pylint: disable=missing-function-docstring
         if data:
             self.data = data
         else:
             self.data = None
 
-    def commit(self):
+    def commit(self):  # pylint: disable=missing-function-docstring
         new_domain = []
-
-        # log.exception('self.data.domain')
-        # log.exception(self.data.domain)
-        # log.exception(type(self.data.domain))
-
-        # for item in self.data.domain:
-        #     log.exception(type(item))
-        #     if item.name.find('qcc-Zxxx-') > -1:
-        #         new_name = item.name.replace('qcc-Zxxx-', '')
-        #         # self.data.domain[item].renamed(new_name)
-        #         # self.data.domain[item].name = new_name
-        #         # self.data.domain[item]._name = new_name
-        #         self.data.domain[item] = self.data.domain[item].renamed(new_name)
-        #     # new_domain.append(new_item)
-
-        # log.exception('self.data.domain')
-        # log.exception(self.data.domain)
-
-        # new_columns = tuple(DiscreteVariable(
-        #         get_unique_names(self.data.domain, v), values=("0", "1"),
-        #         compute_value=OneHotStrings(sc, v)
-        #     ) for v in sc.new_values)
 
         log.exception(' >>>> self.data.domain.attributes')
         log.exception(type(self.data.domain.attributes))
@@ -89,35 +77,17 @@ class HXLShortNames(OWWidget):
 
         new_attributes = []
         for item in self.data.domain.attributes:
-            # log.exception(' >>>> item')
-            # log.exception(type(item))
-            if item.name.find('qcc-Zxxx-') > -1:
-                log.exception('foi!')
-                newname = item.name.replace('qcc-Zxxx-', '')
-                item = item.renamed(newname)
-
+            item = item.renamed(bcp47_shortest_name(item.name))
             new_attributes.append(item)
 
         new_metas = []
         for item in self.data.domain.metas:
-            # log.exception(' >>>> item')
-            # log.exception(type(item))
-            if item.name.find('qcc-Zxxx-') > -1:
-                log.exception('foi!')
-                newname = item.name.replace('qcc-Zxxx-', '')
-                item = item.renamed(newname)
-
+            item = item.renamed(bcp47_shortest_name(item.name))
             new_metas.append(item)
 
         new_class_vars = []
         for item in self.data.domain.class_vars:
-            # log.exception(' >>>> item')
-            # log.exception(type(item))
-            if item.name.find('qcc-Zxxx-') > -1:
-                log.exception('foi!')
-                newname = item.name.replace('qcc-Zxxx-', '')
-                item = item.renamed(newname)
-
+            item = item.renamed(bcp47_shortest_name(item.name))
             new_class_vars.append(item)
 
         new_domain = Domain(
@@ -143,10 +113,12 @@ class HXLShortNames(OWWidget):
         # self.Outputs.data.send(self.data)
 
     def send_report(self):
+        """send_report"""
         # self.report_plot() includes visualizations in the report
         self.report_caption(self.label)
 
 
 if __name__ == "__main__":
+    # pylint: disable=ungrouped-imports
     from Orange.widgets.utils.widgetpreview import WidgetPreview  # since Orange 3.20.0
     WidgetPreview(HXLShortNames).run()

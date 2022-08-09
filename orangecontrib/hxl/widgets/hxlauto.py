@@ -1,18 +1,24 @@
-import numpy as np
+"""hxlauto"""
+
 import logging
-from Orange.data import Table
+import numpy as np
+# from Orange.data import Table
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
-from Orange.data import Table, Domain, DiscreteVariable, StringVariable
+# from Orange.data import Table, Domain, DiscreteVariable, StringVariable
+from Orange.data import Table, Domain, DiscreteVariable, ContinuousVariable
 from Orange.data.util import SharedComputeValue, get_unique_names
 
-from .utils import *
+from orangecontrib.hxl.widgets.utils import WKTPointSplit, wkt_point_split
+
+# from .utils import *
 
 log = logging.getLogger(__name__)
 
 
 class HXLAuto(OWWidget):
+    """HXLAuto"""
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
     name = "HXL auto inference"
@@ -63,30 +69,30 @@ class HXLAuto(OWWidget):
     def commit(self):
         log.debug("commit: %s", self.data)
         # log.exception(self.data.types, exc_info=True)
-        log.exception('self.data.columns')
-        log.exception(self.data.columns, exc_info=True)
+        # log.exception('self.data.columns')
+        # log.exception(self.data.columns, exc_info=True)
 
-        # @NOTE: metas = only data with data labeled as meta. Makes sense
-        log.exception('self.data.metas')
-        log.exception(self.data.metas, exc_info=True)
-        log.exception('self.data.attributes')
-        log.exception(self.data.attributes, exc_info=True)
-        log.exception('self.data.ids')
-        log.exception(self.data.ids, exc_info=True)
+        # # @NOTE: metas = only data with data labeled as meta. Makes sense
+        # log.exception('self.data.metas')
+        # log.exception(self.data.metas, exc_info=True)
+        # log.exception('self.data.attributes')
+        # log.exception(self.data.attributes, exc_info=True)
+        # log.exception('self.data.ids')
+        # log.exception(self.data.ids, exc_info=True)
 
-        # @NOTE: domain = headers? humm
-        log.exception('self.data.domain')
-        log.exception(self.data.domain, exc_info=True)
-        # log.exception(self.data.get_columns(), exc_info=True)
-        # log.exception(list(self.data.columns), exc_info=True)
+        # # @NOTE: domain = headers? humm
+        # log.exception('self.data.domain')
+        # log.exception(self.data.domain, exc_info=True)
+        # # log.exception(self.data.get_columns(), exc_info=True)
+        # # log.exception(list(self.data.columns), exc_info=True)
 
-        # @NOTE data seens to have
-        #   > [data1, data2, data3, data4] {meta1, meta2, meta3, meta4}
-        #   > [data1, data2, data3, data4] {meta1, meta2, meta3, meta4}
-        log.exception('self.data')
-        log.exception(self.data)
-        log.exception('type(self.data)')
-        log.exception(type(self.data))
+        # # @NOTE data seens to have
+        # #   > [data1, data2, data3, data4] {meta1, meta2, meta3, meta4}
+        # #   > [data1, data2, data3, data4] {meta1, meta2, meta3, meta4}
+        # log.exception('self.data')
+        # log.exception(self.data)
+        # log.exception('type(self.data)')
+        # log.exception(type(self.data))
 
         # new_attribute = 'latitude'
         # new_column = ['aa'] * 200
@@ -100,7 +106,19 @@ class HXLAuto(OWWidget):
 
         var = 'qcc-Zxxx-r-pWDATA-pp625-ps5000-x-zzwgs84point'
         column = self.data.get_column_view(var)[0]
+        new_column_lat = []
+        new_column_lon = []
+        for item in column:
+            res = wkt_point_split(item)
+            new_column_lat.append(res[0])
+            new_column_lon.append(res[1])
+
         sc = WKTPointSplit(self.data, var)
+
+        log.exception('type(column)')
+        log.exception(type(column))
+        log.exception('column')
+        log.exception(column)
 
         log.exception('sc')
         log.exception(sc)
@@ -109,13 +127,34 @@ class HXLAuto(OWWidget):
             get_unique_names(self.data.domain, v), values=("0", "1"),
             compute_value=OneHotStrings(sc, v)
         ) for v in sc.new_values)
+
+        log.exception('new_column_lat')
+        log.exception(new_column_lat)
+        log.exception('new_column_lon')
+        log.exception(new_column_lon)
+
+        # new_columns_v2 = (
+        #     DiscreteVariable('latitude', new_column_lat, compute_value=True),
+        #     DiscreteVariable('longitude', new_column_lon, compute_value=True),
+        # )
+        new_columns_v2 = (
+            DiscreteVariable('latitude', new_column_lat),
+            DiscreteVariable('longitude', new_column_lon),
+        )
         # new_columns = tuple(DiscreteVariable("1") for v in sc.new_values)
+
+        log.exception('new_columns_v2')
+        log.exception(new_columns_v2)
 
         # log.exception('new_columns')
         # log.exception(new_columns)
 
+        # new_domain = Domain(
+        #     self.data.domain.attributes + new_columns,
+        #     self.data.domain.class_vars, self.data.domain.metas
+        # )
         new_domain = Domain(
-            self.data.domain.attributes + new_columns,
+            self.data.domain.attributes + new_columns_v2,
             self.data.domain.class_vars, self.data.domain.metas
         )
         extended_data = self.data.transform(new_domain)

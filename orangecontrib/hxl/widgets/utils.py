@@ -1,17 +1,26 @@
-from collections import namedtuple
+"""utils
+"""
 
 
 def wkt_point_split(text: str) -> tuple:
+    """wkt_point_split"""
     if not text:
+        # return [None, None]
         return ['', '']
     if not text.startswith('Point('):
+        # return [None, None]
         return ['', '']
-    text_core = text.replace('Point(', '').replace(')')
+
+    text_core = text.replace('Point(', '').replace(')', '')
     # @TODO what if have z component? Not implemented
+    parts = text_core.split(' ')
+    # return [float(parts[0]), float(parts[1])]
     return text_core.split(' ')
 
 
 class WKTPointSplit:
+    """WKTPointSplit"""
+
     def __init__(self, data, attr, delimiter=' '):
         self.attr = attr
         self.delimiter = delimiter
@@ -37,48 +46,32 @@ class WKTPointSplit:
 
     @staticmethod
     def get_string_values(data, var):
+        """get_string_values"""
         # turn discrete to string variable
         column = data.get_column_view(var)[0]
         # if var.is_discrete:
         #     return [var.str_val(x) for x in column]
         return column
 
-class _DataType:
-    def __eq__(self, other):
-        """Equal if `other` has the same type and all elements compare equal."""
-        if type(self) is not type(other):
-            return False
-        return super().__eq__(other)
 
-    def __ne__(self, other):
-        return not self == other
+def bcp47_shortest_name(name: str, _name_list: list = None):
+    """bcp47_shortest_name"""
+    # @TODO finish this draft
+    # @TODO consider name_list to avoid create duplicates
 
-    def __hash__(self):
-        return hash((type(self), super().__hash__()))
+    if name.find('qcc-Zxxx-r-aMDCIII-alatcodicem') > -1 or \
+            name.find('sU2200') > -1:
+        # For now, lets avoid mess with global identifiers
+        return name
 
-    def name_type(self):
-        """
-        Returns a tuple with name and type of the variable.
-        It is used since it is forbidden to use names of variables in settings.
-        """
-        type_number = {
-            "Categorical": 0,
-            "Real": 2,
-            "Time": 3,
-            "String": 4
-        }
-        return self.name, type_number[type(self).__name__]
+    if name.find('-x-') > -1:
+        parts = name.split('-x-')
+        name = 'x-' + parts[1]
 
-# From Orange/widgets/data/oweditdomain.py
-class Rename(_DataType, namedtuple("Rename", ["name"])):
-    """
-    Rename a variable.
+    if name.find('qcc-Zxxx-r') > -1:
+        name = name.replace('qcc-Zxxx-r', '')
 
-    Parameters
-    ----------
-    name : str
-        The new name
-    """
-    def __call__(self, var):
-        # type: (Variable) -> Variable
-        return var._replace(name=self.name)
+    if name.find('qcc-Zxxx') > -1:
+        name = name.replace('qcc-Zxxx', '')
+
+    return name
