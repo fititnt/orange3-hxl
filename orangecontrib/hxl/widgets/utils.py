@@ -1,11 +1,16 @@
 """utils
 """
+
+import logging
 from orangecontrib.hxl.L999999999_0 import (
     hxl_hashtag_to_bcp47,
     # hxltm_carricato,
     # qhxl_hxlhashtag_2_bcp47,
     # # (...)
 )
+from Orange.data import Table
+
+log = logging.getLogger(__name__)
 
 
 def wkt_point_split(text: str) -> tuple:
@@ -107,3 +112,15 @@ def bcp47_shortest_name(name: str, name_list: list = None):
         attempt += 1
 
     return name
+
+
+def orange_data_roles_ex_hxl(orange_table: Table) -> Table:
+    # (...)
+    log.exception(
+        f'>>> orange_data_roles_ex_hxl orange_table.domain.attributes {orange_table.domain.attributes}')
+    log.exception(
+        f'>>> orange_data_roles_ex_hxl orange_table.domain.metas {orange_table.domain.metas}')
+    log.exception(
+        f'>>> orange_data_roles_ex_hxl orange_table.domain.class_vars {orange_table.domain.class_vars}')
+    extended_data = orange_table
+    return extended_data

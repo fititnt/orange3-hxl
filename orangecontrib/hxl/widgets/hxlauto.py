@@ -10,7 +10,7 @@ from Orange.widgets.widget import OWWidget, Input, Output, Msg
 from Orange.data import Table, Domain, DiscreteVariable, ContinuousVariable, StringVariable
 from Orange.data.util import SharedComputeValue, get_unique_names
 
-from orangecontrib.hxl.widgets.utils import WKTPointSplit, wkt_point_split
+from orangecontrib.hxl.widgets.utils import WKTPointSplit, orange_data_roles_ex_hxl, wkt_point_split
 
 # from .utils import *
 
@@ -104,7 +104,7 @@ class HXLAuto(OWWidget):
         #     self.optionsBox, self, "commitOnChange", "Commit data on selection change"
         # )
         gui.button(self.optionsBox, self, "Commit", callback=self.commit)
-        self.optionsBox.setDisabled(True)
+        self.optionsBox.setDisabled(False)
 
     @Inputs.data
     def set_data(self, data):
@@ -126,8 +126,8 @@ class HXLAuto(OWWidget):
 
         # @TODO make this part not hardcoded
 
-        log.exception('self.data.domain.variables')
-        log.exception(self.data.domain.variables)
+        # log.exception('self.data.domain.variables')
+        # log.exception(self.data.domain.variables)
 
         # var_names = map(lambda x: x['name'], self.data.domain.variables)
 
@@ -146,12 +146,17 @@ class HXLAuto(OWWidget):
             if item.name.find('zzwgs84point') > -1:
                 zzwgs84point.append(item.name)
 
-        log.exception('zzwgs84point 0')
-        log.exception(zzwgs84point)
+        # log.exception('zzwgs84point 0')
+        # log.exception(zzwgs84point)
 
         # Either not have Point(12.34 56.78) or already processed
         if len(zzwgs84point) == 0 or already_have_latlon:
-            self.Outputs.data.send(self.data)
+
+            log.exception(f'>>> (pre) orange_data_roles_ex_hxl')
+            extended_data_2 = orange_data_roles_ex_hxl(self.data)
+
+            # self.Outputs.data.send(self.data)
+            self.Outputs.data.send(extended_data_2)
             return None
 
         if len(zzwgs84point) > 1:
@@ -161,8 +166,8 @@ class HXLAuto(OWWidget):
 
         # log.exception('var_names')
         # log.exception(var_names)
-        log.exception('zzwgs84point')
-        log.exception(zzwgs84point)
+        # log.exception('zzwgs84point')
+        # log.exception(zzwgs84point)
         # var = 'qcc-Zxxx-r-pWDATA-pp625-ps5000-x-zzwgs84point'
         var = zzwgs84point[0]
         column = self.data.get_column_view(var)[0]
@@ -180,8 +185,12 @@ class HXLAuto(OWWidget):
             ContinuousVariable('longitude'),
             new_column_lon
         )
+        # self.Outputs.data.send(extended_data)
+        log.exception(f'>>> (pre) orange_data_roles_ex_hxl')
+        extended_data_2 = orange_data_roles_ex_hxl(extended_data)
 
-        self.Outputs.data.send(extended_data)
+        self.Outputs.data.send(extended_data_2)
+        # self.Outputs.data.send(extended_data)
         # self.Outputs.data.send(self.data)
 
     def send_report(self):
