@@ -1,5 +1,11 @@
 """utils
 """
+from orangecontrib.hxl.L999999999_0 import (
+    hxl_hashtag_to_bcp47,
+    # hxltm_carricato,
+    # qhxl_hxlhashtag_2_bcp47,
+    # # (...)
+)
 
 
 def wkt_point_split(text: str) -> tuple:
@@ -54,7 +60,26 @@ class WKTPointSplit:
         return column
 
 
-def bcp47_shortest_name(name: str, _name_list: list = None):
+def sortname(name: str, name_list: list = None) -> str:
+    if not name.startswith('#') and \
+            (name.startswith('item+') or
+                name.startswith('status+') or
+             name.startswith('date+')):
+        name = '#' + name
+
+    # if name.startswith('#'):
+    #     maybe = hxl_hashtag_to_bcp47(name)
+    #     return bcp47_shortest_name(maybe)
+    if name.startswith('#'):
+        maybe = hxl_hashtag_to_bcp47(name)
+        if maybe and maybe['Language-Tag_normalized']:
+            return bcp47_shortest_name(
+                maybe['Language-Tag_normalized'], name_list)
+
+    return bcp47_shortest_name(name, name_list)
+
+
+def bcp47_shortest_name(name: str, name_list: list = None):
     """bcp47_shortest_name"""
     # @TODO finish this draft
     # @TODO consider name_list to avoid create duplicates
@@ -73,5 +98,12 @@ def bcp47_shortest_name(name: str, _name_list: list = None):
 
     if name.find('qcc-Zxxx') > -1:
         name = name.replace('qcc-Zxxx', '')
+
+    name_minimal = name
+    attempt = 0
+    while name in name_list:
+        name = f'{name_minimal}-zzi{str(attempt)}'
+        # name = name_minimal + '-zzq'
+        attempt += 1
 
     return name

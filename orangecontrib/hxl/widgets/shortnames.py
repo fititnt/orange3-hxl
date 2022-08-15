@@ -11,7 +11,7 @@ from Orange.widgets.widget import OWWidget, Input, Output, Msg
 # from Orange.data import Table, Domain, DiscreteVariable, StringVariable
 from Orange.data import Table, Domain
 
-from orangecontrib.hxl.widgets.utils import bcp47_shortest_name
+from orangecontrib.hxl.widgets.utils import bcp47_shortest_name, sortname
 
 log = logging.getLogger(__name__)
 
@@ -65,6 +65,8 @@ class HXLShortNames(OWWidget):
     def commit(self):  # pylint: disable=missing-function-docstring
         new_domain = []
 
+        # @TODO make early check if have input data before continue
+
         log.exception(' >>>> self.data.domain.attributes')
         log.exception(type(self.data.domain.attributes))
         log.exception(self.data.domain.attributes)
@@ -76,18 +78,31 @@ class HXLShortNames(OWWidget):
         log.exception(self.data.domain.metas)
 
         new_attributes = []
+        history_new_names = []
         for item in self.data.domain.attributes:
-            item = item.renamed(bcp47_shortest_name(item.name))
+            # item = item.renamed(bcp47_shortest_name(item.name))
+            new_name = sortname(item.name, history_new_names)
+            log.exception(new_name)
+            history_new_names.append(new_name)
+            item = item.renamed(new_name)
+            log.exception(type(self.data.domain.attributes))
             new_attributes.append(item)
 
         new_metas = []
         for item in self.data.domain.metas:
-            item = item.renamed(bcp47_shortest_name(item.name))
+            new_name = sortname(item.name, history_new_names)
+            log.exception(new_name)
+            history_new_names.append(new_name)
+            item = item.renamed(new_name)
             new_metas.append(item)
 
         new_class_vars = []
         for item in self.data.domain.class_vars:
-            item = item.renamed(bcp47_shortest_name(item.name))
+            # item = item.renamed(bcp47_shortest_name(item.name))
+            new_name = sortname(item.name, history_new_names)
+            log.exception(new_name)
+            history_new_names.append(new_name)
+            item = item.renamed(new_name)
             new_class_vars.append(item)
 
         new_domain = Domain(

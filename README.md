@@ -45,6 +45,7 @@ The new widget appears in the toolbox bar under the section Example.
 
 ## TODOs
 
+- https://github.com/fititnt/orange3-hxl/issues/1
 - (...)
 
 <!--
