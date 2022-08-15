@@ -62,6 +62,50 @@ class HXLAuto(OWWidget):
         self.label_box = gui.lineEdit(
             self.controlArea, self, "label", box="Text", callback=self.commit)
 
+        self.hxlh_meta = '#meta,#date,#status'
+        self.hxlh_meta_box = gui.lineEdit(
+            self.controlArea, self, "hxlh_meta", box="Base hashtags: Role=meta")
+
+        self.hxla_meta = '+code,+codicem,+id,+name'
+        self.hxla_meta_box = gui.lineEdit(
+            self.controlArea, self, "hxla_meta", box="HXL attributes: Role=meta")
+
+        gui.separator(self.controlArea)
+        self.hxlh_ignore = ''
+        self.hxlh_ignore_box = gui.lineEdit(
+            self.controlArea, self, "hxlh_ignore", box="Base hashtags: Role=ignore")
+
+        self.hxla_ignore = ''
+        self.hxla_ignore_box = gui.lineEdit(
+            self.controlArea, self, "hxla_ignore", box="HXL attributes: Role=meta")
+
+        box = gui.widgetBox(self.controlArea, "Info")
+        self.infoa = gui.widgetLabel(
+            box, "No data on input yet, waiting to get something."
+        )
+        self.infob = gui.widgetLabel(box, "")
+
+        gui.separator(self.controlArea)
+        self.optionsBox = gui.widgetBox(self.controlArea, "Options")
+
+        # @TODO implement some way to enforce weight
+        #       https://orange3.readthedocs.io/projects/orange-data-mining-library/en/latest/reference/data.instance.html?highlight=weight#Orange.data.Instance.weight
+        # gui.spin(
+        #     self.optionsBox,
+        #     self,
+        #     "proportion",
+        #     minv=10,
+        #     maxv=90,
+        #     step=10,
+        #     label="Sample Size [%]:",
+        #     callback=[self.selection, self.checkCommit],
+        # )
+        # gui.checkBox(
+        #     self.optionsBox, self, "commitOnChange", "Commit data on selection change"
+        # )
+        gui.button(self.optionsBox, self, "Commit", callback=self.commit)
+        self.optionsBox.setDisabled(True)
+
     @Inputs.data
     def set_data(self, data):
         """set_data"""
@@ -72,7 +116,13 @@ class HXLAuto(OWWidget):
 
     def commit(self):
         """commit"""
-        log.debug("commit: %s", self.data)
+        if not self.data:
+            self.infoa.setText("No input data yet")
+            return None
+        else:
+            self.infoa.setText("Processing data...")
+            self.optionsBox.setDisabled(False)
+        # log.debug("commit: %s", self.data)
 
         # @TODO make this part not hardcoded
 
