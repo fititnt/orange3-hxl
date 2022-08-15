@@ -4906,7 +4906,7 @@ def hxl_hashtag_normalizatio(hashtag: str) -> str:
     #       sorting before all others +is_llll and +ix_xxxxx. Yet we may keep
     #       as it is (Rocha, 2022-07-31 14:12 UTC)
 
-    hxltm_prefix = ('#item+rem', '#meta+rem', '#status+rem')
+    hxltm_prefix = ('#item+rem', '#meta+rem', '#status+rem', '#date+rem')
     hxltm_hashtag = None
     _hxltm_attrs = []
     _hxltm_attrs_lang = None

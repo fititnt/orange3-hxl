@@ -10,7 +10,7 @@ from Orange.widgets.widget import OWWidget, Input, Output, Msg
 from Orange.data import Table, Domain, DiscreteVariable, ContinuousVariable, StringVariable
 from Orange.data.util import SharedComputeValue, get_unique_names
 
-from orangecontrib.hxl.widgets.utils import WKTPointSplit, orange_data_roles_ex_hxl, wkt_point_split
+from orangecontrib.hxl.widgets.utils import WKTPointSplit, orange_data_names_normalization, orange_data_roles_ex_hxl, wkt_point_split
 
 # from .utils import *
 
@@ -153,7 +153,9 @@ class HXLAuto(OWWidget):
         if len(zzwgs84point) == 0 or already_have_latlon:
 
             log.exception(f'>>> (pre) orange_data_roles_ex_hxl')
-            extended_data_2 = orange_data_roles_ex_hxl(self.data)
+            extended_data_3, _changes = orange_data_names_normalization(
+                self.data)
+            extended_data_2 = orange_data_roles_ex_hxl(extended_data_3)
 
             # self.Outputs.data.send(self.data)
             self.Outputs.data.send(extended_data_2)
@@ -187,7 +189,9 @@ class HXLAuto(OWWidget):
         )
         # self.Outputs.data.send(extended_data)
         log.exception(f'>>> (pre) orange_data_roles_ex_hxl')
-        extended_data_2 = orange_data_roles_ex_hxl(extended_data)
+        # extended_data_3, _changes = orange_data_names_normalization(self.data)
+        extended_data_3, _changes = orange_data_names_normalization(extended_data)
+        extended_data_2 = orange_data_roles_ex_hxl(extended_data_3)
 
         self.Outputs.data.send(extended_data_2)
         # self.Outputs.data.send(extended_data)
@@ -206,26 +210,6 @@ class HXLAuto(OWWidget):
         # if var.is_discrete:
         #     return [var.str_val(x) for x in column]
         return column
-
-
-# class OneHotStrings(SharedComputeValue):
-
-#     def __init__(self, fn, new_feature):
-#         super().__init__(fn)
-#         self.new_feature = new_feature
-
-#     def __eq__(self, other):
-#         return self.compute_shared == other.compute_shared \
-#             and self.new_feature == other.new_feature
-
-#     def __hash__(self):
-#         return hash((self.compute_shared, self.new_feature))
-
-#     def compute(self, data, shared_data):
-#         indices = shared_data[self.new_feature]
-#         col = np.zeros(len(data))
-#         col[indices] = 1
-#         return col
 
 
 if __name__ == "__main__":
