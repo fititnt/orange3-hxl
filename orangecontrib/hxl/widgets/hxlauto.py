@@ -10,7 +10,7 @@ from Orange.widgets.widget import OWWidget, Input, Output, Msg
 from Orange.data import Table, Domain, DiscreteVariable, ContinuousVariable, StringVariable
 from Orange.data.util import SharedComputeValue, get_unique_names
 
-from orangecontrib.hxl.widgets.utils import WKTPointSplit, orange_data_names_normalization, orange_data_roles_ex_hxl, wkt_point_split
+from orangecontrib.hxl.widgets.utils import WKTPointSplit, orange_data_names_normalization, orange_data_roles_ex_hxl, string_to_list, wkt_point_split
 
 # from .utils import *
 
@@ -62,22 +62,22 @@ class HXLAuto(OWWidget):
         self.label_box = gui.lineEdit(
             self.controlArea, self, "label", box="Text", callback=self.commit)
 
-        self.hxlh_meta = '#meta,#date,#status'
+        self.hxl_h_meta = '#meta,#date,#status'
         self.hxlh_meta_box = gui.lineEdit(
-            self.controlArea, self, "hxlh_meta", box="Base hashtags: Role=meta")
+            self.controlArea, self, "hxl_h_meta", box="Base hashtags: Role=meta")
 
-        self.hxla_meta = '+code,+codicem,+id,+name'
-        self.hxla_meta_box = gui.lineEdit(
-            self.controlArea, self, "hxla_meta", box="HXL attributes: Role=meta")
+        self.hxl_a_meta = '+code,+codicem,+id,+name'
+        self.hxl_a_meta_box = gui.lineEdit(
+            self.controlArea, self, "hxl_a_meta", box="HXL attributes: Role=meta")
 
         gui.separator(self.controlArea)
-        self.hxlh_ignore = ''
-        self.hxlh_ignore_box = gui.lineEdit(
-            self.controlArea, self, "hxlh_ignore", box="Base hashtags: Role=ignore")
+        self.hxl_h_ignore = ''
+        self.hxl_h_ignore_box = gui.lineEdit(
+            self.controlArea, self, "hxl_h_ignore", box="Base hashtags: Role=ignore")
 
-        self.hxla_ignore = ''
-        self.hxla_ignore_box = gui.lineEdit(
-            self.controlArea, self, "hxla_ignore", box="HXL attributes: Role=meta")
+        self.hxl_a_ignore = ''
+        self.hxl_a_ignore_box = gui.lineEdit(
+            self.controlArea, self, "hxl_a_ignore", box="HXL attributes: Role=meta")
 
         box = gui.widgetBox(self.controlArea, "Info")
         self.infoa = gui.widgetLabel(
@@ -124,6 +124,19 @@ class HXLAuto(OWWidget):
             self.optionsBox.setDisabled(False)
         # log.debug("commit: %s", self.data)
 
+        # hxl_h_meta = None
+        hxl_h_meta = string_to_list(self.hxl_h_meta, None, '#')
+        hxl_a_meta = string_to_list(self.hxl_a_meta, None, '+')
+        hxl_h_ignore = string_to_list(self.hxl_h_ignore, None, '#')
+        hxl_a_ignore = string_to_list(self.hxl_a_ignore, None, '+')
+        # if self.hxlh_meta:
+        #     _temp = filter(None, map(str.strip, self.hxl_h_meta.split(',')))
+        #     hxl_h_meta = _temp if len(_temp) > 0 else None
+        # hxla_meta = None
+        # if self.hxla_meta:
+        #     _temp = filter(None, map(str.strip, self.hxla_meta.split(',')))
+        #     hxla_meta = _temp if len(_temp) > 0 else None
+
         # @TODO make this part not hardcoded
 
         # log.exception('self.data.domain.variables')
@@ -155,7 +168,13 @@ class HXLAuto(OWWidget):
             log.exception(f'>>> (pre) orange_data_roles_ex_hxl')
             extended_data_3, _changes = orange_data_names_normalization(
                 self.data)
-            extended_data_2 = orange_data_roles_ex_hxl(extended_data_3)
+            extended_data_2, _changes2 = orange_data_roles_ex_hxl(
+                extended_data_3,
+                hxl_h_meta=hxl_h_meta,
+                hxl_a_meta=hxl_a_meta,
+                hxl_h_ignore=hxl_h_ignore,
+                hxl_a_ignore=hxl_a_ignore,
+            )
 
             # self.Outputs.data.send(self.data)
             self.Outputs.data.send(extended_data_2)
@@ -190,8 +209,9 @@ class HXLAuto(OWWidget):
         # self.Outputs.data.send(extended_data)
         log.exception(f'>>> (pre) orange_data_roles_ex_hxl')
         # extended_data_3, _changes = orange_data_names_normalization(self.data)
-        extended_data_3, _changes = orange_data_names_normalization(extended_data)
-        extended_data_2 = orange_data_roles_ex_hxl(extended_data_3)
+        extended_data_3, _changes = orange_data_names_normalization(
+            extended_data)
+        extended_data_2, _changes2 = orange_data_roles_ex_hxl(extended_data_3)
 
         self.Outputs.data.send(extended_data_2)
         # self.Outputs.data.send(extended_data)

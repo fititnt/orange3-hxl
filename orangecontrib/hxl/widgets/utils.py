@@ -25,7 +25,7 @@
 """
 
 import logging
-from typing import Tuple
+from typing import Any, Tuple, Union
 from orangecontrib.hxl.L999999999_0 import (
     hxl_hashtag_normalizatio,
     hxl_hashtag_to_bcp47,
@@ -146,7 +146,6 @@ def bcp47_shortest_name(name: str, name_list: list = None):
         attempt += 1
 
     return name
-# Tuple[str, List[float], int]:
 
 
 def orange_data_names_normalization(
@@ -165,8 +164,8 @@ def orange_data_names_normalization(
         Table: _description_
     """
     changes = {
-        'total': -1,
-        'prefix_hash': -1
+        # 'total': -1,
+        'prefix_hash': 0
     }
     # log.exception(' >>>> self.data.domain.attributes')
     # log.exception(type(self.data.domain.attributes))
@@ -234,13 +233,137 @@ def orange_data_names_normalization(
         return orange_table, changes
 
 
-def orange_data_roles_ex_hxl(orange_table: Table) -> Table:
-    # (...)
-    # log.exception(
-    #     f'>>> orange_data_roles_ex_hxl orange_table.domain.attributes {orange_table.domain.attributes}')
-    # log.exception(
-    #     f'>>> orange_data_roles_ex_hxl orange_table.domain.metas {orange_table.domain.metas}')
-    # log.exception(
-    #     f'>>> orange_data_roles_ex_hxl orange_table.domain.class_vars {orange_table.domain.class_vars}')
-    extended_data = orange_table
-    return extended_data
+def orange_data_roles_ex_hxl(
+    orange_table: Table,
+    hxl_h_meta: list = None,
+    hxl_a_meta: list = None,
+    hxl_h_ignore: list = None,
+    hxl_a_ignore: list = None,
+) -> Table:
+
+    log.exception(
+        f'>>> orange_data_roles_ex_hxl hxl_h_meta {hxl_h_meta}')
+    log.exception(
+        f'>>> orange_data_roles_ex_hxl hxl_a_meta {hxl_a_meta}')
+    log.exception(
+        f'>>> orange_data_roles_ex_hxl hxl_h_ignore {hxl_h_ignore}')
+    log.exception(
+        f'>>> orange_data_roles_ex_hxl hxl_h_ignore {hxl_h_ignore}')
+    log.exception(
+        f'>>> orange_data_roles_ex_hxl hxl_a_ignore {hxl_a_ignore}')
+
+    # NOTE: this widget assume orange_data_names_normalization() was used
+    #       earlier
+    changes = {
+        # 'total': -1,
+        'to_meta': 0,
+        'to_ignore': 0
+    }
+    # log.exception(' >>>> self.data.domain.attributes')
+    # log.exception(type(self.data.domain.attributes))
+    # log.exception(self.data.domain.attributes)
+    # log.exception(' >>>> self.data.domain.class_vars')
+    # log.exception(type(self.data.domain.class_vars))
+    # log.exception(self.data.domain.class_vars)
+    # log.exception(' >>>> self.data.domain.metas')
+    # log.exception(type(self.data.domain.metas))
+    # log.exception(self.data.domain.metas)
+
+    def _normalize(textum: str) -> str:
+        if not textum.startswith('#'):
+            for ref, val in HXL_BASE_ASSUME_IMPLICIT_HASHTAG.items():
+                if textum.startswith(ref):
+                    textum = textum.replace(ref, val)
+                    break
+        if not textum.startswith('#'):
+            # We avoid try "fix" variables user may adding to the datasets
+            return textum
+
+        return hxl_hashtag_normalizatio(textum)
+
+    needs_update = False
+    new_attributes = []
+    history_new_names = []
+    for item in orange_table.domain.attributes:
+        new_name = _normalize(item.name)
+        history_new_names.append(new_name)
+        if new_name != item.name:
+            needs_update = True
+            item = item.renamed(new_name)
+        new_attributes.append(item)
+
+    new_metas = []
+    for item in orange_table.domain.metas:
+        new_name = _normalize(item.name)
+        history_new_names.append(new_name)
+        if new_name != item.name:
+            needs_update = True
+            item = item.renamed(new_name)
+        new_metas.append(item)
+
+    new_class_vars = []
+    for item in orange_table.domain.class_vars:
+        new_name = _normalize(item.name)
+        history_new_names.append(new_name)
+        if new_name != item.name:
+            needs_update = True
+            item = item.renamed(new_name)
+        new_class_vars.append(item)
+
+    if needs_update:
+        log.exception(
+            f'>>> orange_data_roles_ex_hxl changes necessary')
+        new_domain = Domain(
+            new_attributes,
+            new_class_vars, new_metas
+        )
+        extended_data = orange_table.transform(new_domain)
+        return extended_data, None
+    else:
+        log.exception(
+            f'>>> orange_data_roles_ex_hxl no changes necessary')
+        return orange_table, changes
+
+
+def string_to_list(
+        text: str, default: Any = None,
+        prefix: str = None,
+        strip_prefix: bool = False
+) -> Union[list, Any]:
+    result = []
+    if text and isinstance(text, str):
+        result = filter(None, map(str.strip, text.split(',')))
+        if prefix:
+            result = [x for x in result if x.startswith(prefix)]
+            if strip_prefix and len(result) > 0:
+                result = [x.replace(prefix, '') for x in result]
+
+    if len(result) == 0:
+        return default
+
+    return result
+
+
+def qhxl_match(
+    hashtag: str,
+    base_hashtags: list = None,
+    attributes: list = None,
+    hashtags_plus_attributes_op_or: bool = False,
+    attributes_op_or: bool = False,
+    # base_hashtags_op_or: bool = False, # this would not make sense
+) -> bool:
+    if not hashtag or not hashtag.startswith('#') or hashtag.find('+') == -1:
+        return None
+    _okay_h = False if base_hashtags else None
+    _okay_a = False if attributes else None
+
+    _parts = hashtag.split('+')
+    _de_facto_basi = _parts.pop(0).strip()
+
+    if base_hashtags and f'#{_de_facto_basi}' in base_hashtags:
+        _okay_h = True
+    if attributes:
+        pass
+    # @TODO ...
+
+    return True
