@@ -3,7 +3,7 @@ from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
-from orangecontrib.hxl.hxlclasses import FileRAW
+from orangecontrib.hxl.base import FileRAW
 
 
 class HXLDownloadFile(OWWidget):
@@ -11,12 +11,13 @@ class HXLDownloadFile(OWWidget):
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
     name = "Download File"
+    id = "orangecontrib.hxl.widgets.downloadfile"
     description = """
     [DRAFT] Download remote file
     """
     icon = "icons/mywidget.svg"
     priority = 50  # where in the widget order it will appear
-    category = "HXL visual ETL"
+    category = "Orange3-HXLvisualETL"
     keywords = ["widget", "data"]
     want_main_area = False
     resizing_enabled = False
@@ -31,8 +32,8 @@ class HXLDownloadFile(OWWidget):
     class Outputs:
         """Outputs"""
         # if there are two or more outputs, default=True marks the default output
-        # data = Output("Data", Table, default=True)
-        data = Output("FileRAW", FileRAW, default=True)
+        # data = Output("Data", Table, default=True, auto_summary=False)
+        data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
 
     # same class can be initiated for Error and Information messages
     class Warning(OWWidget.Warning):

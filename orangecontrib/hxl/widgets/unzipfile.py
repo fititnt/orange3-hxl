@@ -3,19 +3,21 @@ from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
-from orangecontrib.hxl.hxlclasses import FileRAWCollection
+# from orangecontrib.hxl.hxlclasses import FileRAW, FileRAWCollection
+
 
 class HXLUnzipFile(OWWidget):
     """HXLUnzipFile"""
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
     name = "Unzip File"
+    id = "orangecontrib.hxl.widgets.unzipfile"
     description = """
     [DRAFT] Uncompress one file into one or more files
     """
     icon = "icons/mywidget.svg"
     priority = 60  # where in the widget order it will appear
-    category = "HXL visual ETL"
+    category = "Orange3-HXLvisualETL"
     keywords = ["widget", "data"]
     want_main_area = False
     resizing_enabled = False
@@ -25,12 +27,19 @@ class HXLUnzipFile(OWWidget):
     class Inputs:
         """Inputs"""
         # specify the name of the input and the type
-        data = Input("Data", Table)
+        data = Input("Data", Table, default=True)
+        # data = Input("FileRAW", FileRAW, default=True, auto_summary=False)
 
     class Outputs:
         """Outputs"""
-        # if there are two or more outputs, default=True marks the default output
-        data = Output("FileRAWCollection", FileRAWCollection, default=True)
+        data = Output("Data", Table, default=True)
+
+        # data = Output(
+        #     "FileRAWCollection",
+        #     FileRAWCollection,
+        #     default=True,
+        #     auto_summary=False
+        # )
 
     # same class can be initiated for Error and Information messages
     class Warning(OWWidget.Warning):

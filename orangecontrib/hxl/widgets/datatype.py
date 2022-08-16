@@ -15,7 +15,7 @@ class HXLDataType(OWWidget):
     """
     icon = "icons/mywidget.svg"
     priority = 131  # where in the widget order it will appear
-    category = "HXL visual ETL"
+    category = "Orange3-HXLvisualETL"
     keywords = ["widget", "data"]
     want_main_area = False
     resizing_enabled = False

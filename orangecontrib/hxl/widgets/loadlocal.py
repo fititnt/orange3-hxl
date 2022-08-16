@@ -8,13 +8,13 @@ class HXLLoadLocal(OWWidget):
     """HXLLoadLocal"""
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
-    name = "Load Local"
+    name = "Load Local File"
     description = """
     [DRAFT] Local an already HXLized local file
     """
     icon = "icons/mywidget.svg"
     priority = 102  # where in the widget order it will appear
-    category = "HXL visual ETL"
+    category = "Orange3-HXLvisualETL"
     keywords = ["widget", "data"]
     want_main_area = False
     resizing_enabled = False

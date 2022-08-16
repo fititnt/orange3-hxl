@@ -5,9 +5,9 @@ from os import path, walk
 import sys
 from setuptools import setup, find_packages
 
-NAME = "Orange3-HXLVisualETL"
+NAME = "Orange3-HXLvisualETL"
 
-VERSION = "0.1.5"
+VERSION = "0.1.6"
 
 AUTHOR = 'EticaAI'
 AUTHOR_EMAIL = 'rocha@ieee.org'
@@ -49,7 +49,7 @@ ENTRY_POINTS = {
     # Entry points that marks this package as an orange add-on. If set, addon will
     # be shown in the add-ons manager even if not published on PyPi.
     'orange3.addon': (
-        'Orange3-HXLVisualETL = orangecontrib.hxl',
+        'Orange3-HXLvisualETL = orangecontrib.hxl',
         # 'hxl = orangecontrib.hxl',
     ),
     # Entry point used to specify packages containing tutorials accessible
@@ -64,8 +64,10 @@ ENTRY_POINTS = {
         # Syntax: category name = path.to.package.containing.widgets
         # Widget category specification can be seen in
         #    orangecontrib/hxl/widgets/__init__.py
-        'HXL visual ETL = orangecontrib.hxl.widgets',
-        'HXL Reference Data = orangecontrib.referencedata.widgets',
+        # 'HXL visual ETL = orangecontrib.hxl.widgets',
+        'Orange3-HXLvisualETL = orangecontrib.hxl.widgets',
+        # 'HXL Reference Data = orangecontrib.referencedata.widgets',
+        'Orange3-HXLReferenceData = orangecontrib.referencedata.widgets',
     ),
 
     # Register widget help

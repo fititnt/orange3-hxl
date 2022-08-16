@@ -53,4 +53,7 @@ orange-canvas --no-welcome --no-splash
 
 pip install orange3 Orange3-Geo Orange3-Timeseries orange3-text
 pip install Orange3-Survival-Analysis
+
+## To re-install later all the things
+pip uninstall Orange3-HXLvisualETL orange3 Orange3-Geo Orange3-Timeseries orange3-text Orange3-Survival-Analysis Orange3-WorldHappiness Orange3-Explain
 -->

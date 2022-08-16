@@ -3,7 +3,7 @@ from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
-from orangecontrib.hxl.hxlclasses import FileRAW, FileRAWCollection
+from orangecontrib.hxl.base import FileRAW, FileRAWCollection
 
 class HXLSelectFile(OWWidget):
     """HXLSelectFile"""
@@ -16,7 +16,7 @@ class HXLSelectFile(OWWidget):
     """
     icon = "icons/mywidget.svg"
     priority = 70  # where in the widget order it will appear
-    category = "HXL visual ETL"
+    category = "Orange3-HXLvisualETL"
     keywords = ["widget", "data"]
     want_main_area = False
     resizing_enabled = False
@@ -26,12 +26,12 @@ class HXLSelectFile(OWWidget):
     class Inputs:
         """Inputs"""
         # specify the name of the input and the type
-        data = Input("FileRAWCollection", FileRAWCollection)
+        data = Input("FileRAWCollection", FileRAWCollection, auto_summary=False)
 
     class Outputs:
         """Outputs"""
         # if there are two or more outputs, default=True marks the default output
-        data = Output("FileRAW", FileRAW, default=True)
+        data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
 
     # same class can be initiated for Error and Information messages
     class Warning(OWWidget.Warning):
