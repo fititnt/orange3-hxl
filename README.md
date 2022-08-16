@@ -1,4 +1,4 @@
-# Orange3 HXL Add-on
+# Orange3 HXL visual ETL add-on
 
 This is an early draft of [Orange3](http://orange.biolab.si) add-on with minimal
 awareness of data labeled with [HXL](https://hxlstandard.org/).

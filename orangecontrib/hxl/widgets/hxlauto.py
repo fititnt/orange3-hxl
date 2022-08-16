@@ -19,10 +19,10 @@ log = logging.getLogger(__name__)
 
 
 class HXLAuto(OWWidget):
-    """HXLAuto"""
+    """HXL Statistical Role"""
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
-    name = "HXL auto inference"
+    name = "HXL Statistical Role"
     # id = "orange.widgets.data.info"
     description = """
     For already HXLated input, attempt to infer some data transformations.
@@ -30,6 +30,7 @@ class HXLAuto(OWWidget):
     """
     icon = "icons/mywidget.svg"
     priority = 100  # where in the widget order it will appear
+    category = "HXL visual ETL"
     keywords = ["widget", "data"]
     want_main_area = False
     resizing_enabled = False

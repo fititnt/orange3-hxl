@@ -29,7 +29,8 @@ class HXLDataInfo(OWWidget):
     # icon = "icons/DataInfo.svg"
     icon = "icons/mywidget.svg"
     priority = 100
-    category = "HXL"
+    # category = "HXL"
+    category = "HXL visual ETL"
     keywords = ["information", "inspect", "widget"]
 
     class Inputs:

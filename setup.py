@@ -5,24 +5,28 @@ from os import path, walk
 import sys
 from setuptools import setup, find_packages
 
-NAME = "Orange3 HXL Add-on"
+NAME = "Orange3-HXLVisualETL"
 
-VERSION = "0.0.5"
+VERSION = "0.1.0"
 
-AUTHOR = 'Bioinformatics Laboratory, FRI UL'
+AUTHOR = 'EticaAI'
 AUTHOR_EMAIL = 'rocha@ieee.org'
 
-URL = 'http://orange.biolab.si/download'
-DESCRIPTION = "Add-on containing example widgets"
+URL = 'https://github.com/fititnt/orange3-hxl'
+DESCRIPTION = """
+Humanitarian Exchange Language (HXL) visual Extract, Transform, Load (ETL)
+is an add-on for Orange Data Mining.
+"""
 LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.pypi'),
                         'r', encoding='utf-8').read()
 
-LICENSE = "BSD"
+LICENSE = "Unlicence"
 
 KEYWORDS = (
     # [PyPi](https://pypi.python.org) packages with keyword "orange3 add-on"
     # can be installed using the Orange Add-on Manager
-    'orange3 add-on hxl',
+    'orange3 add-on',
+    'hxl',
 )
 
 PACKAGES = find_packages()
@@ -44,7 +48,8 @@ ENTRY_POINTS = {
     # Entry points that marks this package as an orange add-on. If set, addon will
     # be shown in the add-ons manager even if not published on PyPi.
     'orange3.addon': (
-        'hxl = orangecontrib.hxl',
+        'Orange3-HXLVisualETL = orangecontrib.hxl',
+        # 'hxl = orangecontrib.hxl',
     ),
     # Entry point used to specify packages containing tutorials accessible
     # from welcome screen. Tutorials are saved Orange Workflows (.ows files).
@@ -58,7 +63,7 @@ ENTRY_POINTS = {
         # Syntax: category name = path.to.package.containing.widgets
         # Widget category specification can be seen in
         #    orangecontrib/hxl/widgets/__init__.py
-        'HXL = orangecontrib.hxl.widgets',
+        'HXL visual ETL = orangecontrib.hxl.widgets',
     ),
 
     # Register widget help
