@@ -62,11 +62,11 @@ class HXLAuto(OWWidget):
         self.label_box = gui.lineEdit(
             self.controlArea, self, "label", box="Text", callback=self.commit)
 
-        self.hxl_h_meta = '#meta,#date,#status'
+        self.hxl_h_meta = '#meta|#date|#status'
         self.hxlh_meta_box = gui.lineEdit(
             self.controlArea, self, "hxl_h_meta", box="Base hashtags: Role=meta")
 
-        self.hxl_a_meta = '+code,+codicem,+id,+name'
+        self.hxl_a_meta = '+code|+codicem|+id|+name'
         self.hxl_a_meta_box = gui.lineEdit(
             self.controlArea, self, "hxl_a_meta", box="HXL attributes: Role=meta")
 
@@ -77,7 +77,7 @@ class HXLAuto(OWWidget):
 
         self.hxl_a_ignore = ''
         self.hxl_a_ignore_box = gui.lineEdit(
-            self.controlArea, self, "hxl_a_ignore", box="HXL attributes: Role=meta")
+            self.controlArea, self, "hxl_a_ignore", box="HXL attributes: Role=ignore")
 
         box = gui.widgetBox(self.controlArea, "Info")
         self.infoa = gui.widgetLabel(
@@ -125,10 +125,10 @@ class HXLAuto(OWWidget):
         # log.debug("commit: %s", self.data)
 
         # hxl_h_meta = None
-        hxl_h_meta = string_to_list(self.hxl_h_meta, None, '#')
-        hxl_a_meta = string_to_list(self.hxl_a_meta, None, '+')
-        hxl_h_ignore = string_to_list(self.hxl_h_ignore, None, '#')
-        hxl_a_ignore = string_to_list(self.hxl_a_ignore, None, '+')
+        hxl_h_meta = string_to_list(self.hxl_h_meta, None, None, '#')
+        hxl_a_meta = string_to_list(self.hxl_a_meta, None, None, '+')
+        hxl_h_ignore = string_to_list(self.hxl_h_ignore, None, None, '#')
+        hxl_a_ignore = string_to_list(self.hxl_a_ignore, None, None, '+')
         # if self.hxlh_meta:
         #     _temp = filter(None, map(str.strip, self.hxl_h_meta.split(',')))
         #     hxl_h_meta = _temp if len(_temp) > 0 else None

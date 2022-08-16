@@ -24,6 +24,9 @@
 """utils
 """
 
+# pytest
+#    python3 -m doctest orangecontrib/hxl/widgets/utils.py
+
 import logging
 from typing import Any, Tuple, Union
 from orangecontrib.hxl.L999999999_0 import (
@@ -281,15 +284,48 @@ def orange_data_roles_ex_hxl(
 
         return hxl_hashtag_normalizatio(textum)
 
+    def _needs_change(hashtag: str, status_quo: str) -> bool:
+        """_needs_change
+        
+        Return string with target group if necessary. It will always try
+        stay with current Orange3 Roles before trying change to new ones
+        """
+        if not hashtag or not hashtag.startswith('#'):
+            return False
+        if status_quo == 'meta' and \
+                qhxl_match(hashtag, hxl_h_meta, hxl_a_meta):
+            return False
+        if status_quo == 'ignore' and \
+                qhxl_match(hashtag, hxl_h_ignore, hxl_h_ignore):
+            return False
+        if status_quo != 'meta' and \
+                qhxl_match(hashtag, hxl_h_meta, hxl_a_meta):
+            return 'meta'
+        if status_quo != 'ignore' and \
+                qhxl_match(hashtag, hxl_h_ignore, hxl_h_ignore):
+            return 'ignore'
+
+        return None
+
     needs_update = False
     new_attributes = []
     history_new_names = []
+
+    resultatum = {
+       'class' : [],
+       'meta' : [],
+       'ignore' : [],
+    }
+
     for item in orange_table.domain.attributes:
         new_name = _normalize(item.name)
         history_new_names.append(new_name)
-        if new_name != item.name:
+
+        statum_novo = _needs_change(item.name, 'meta')
+
+        if statum_novo:
             needs_update = True
-            item = item.renamed(new_name)
+
         new_attributes.append(item)
 
     new_metas = []
@@ -326,13 +362,46 @@ def orange_data_roles_ex_hxl(
 
 
 def string_to_list(
-        text: str, default: Any = None,
+        text: str,
+        delimiters: list = None,
+        default: Any = None,
         prefix: str = None,
         strip_prefix: bool = False
 ) -> Union[list, Any]:
+    """string_to_list Split text into a list
+
+    Args:
+        text (str): _description_
+        delimiters (list, optional): _description_.
+        default (Any, optional): _description_.
+        prefix (str, optional): If given, require items have this.
+        strip_prefix (bool, optional): Remove prefix from items.
+
+    Returns:
+        Union[list, Any]: the result
+
+    >>> string_to_list('a, b, c')
+    ['a', 'b', 'c']
+
+    >>> string_to_list(None)
+
+    >>> string_to_list('a, b,| c', delimiters=['|'])
+    ['a, b,', 'c']
+
+    >>> string_to_list(
+    ...   '+aa+bb | +cc | dd', delimiters=['|'], prefix='+', strip_prefix=False)
+    ['+aa+bb', '+cc']
+
+    """
     result = []
     if text and isinstance(text, str):
-        result = filter(None, map(str.strip, text.split(',')))
+        if delimiters is None:
+            delimiters = ['|', ',', "\t"]
+        for ditem in delimiters:
+            # ASCII: 29 GS (Group separator)
+            text = text.replace(ditem, chr(29))
+        # result = filter(None, map(str.strip, text.split(',')))
+        result = list(filter(None, map(str.strip, text.split(chr(29)))))
         if prefix:
             result = [x for x in result if x.startswith(prefix)]
             if strip_prefix and len(result) > 0:
@@ -346,24 +415,70 @@ def string_to_list(
 
 def qhxl_match(
     hashtag: str,
-    base_hashtags: list = None,
-    attributes: list = None,
-    hashtags_plus_attributes_op_or: bool = False,
-    attributes_op_or: bool = False,
+    search_hashtags: list = None,
+    search_attributes: list = None,
+    op_and: bool = True,
     # base_hashtags_op_or: bool = False, # this would not make sense
 ) -> bool:
+    """qhxl_match Check if a full HXL hashtag matches a request
+
+    Args:
+        hashtag (str): The full hashtag
+        search_hashtags (list, optional): _description_. Defaults to None.
+        search_attributes (list, optional): _description_. Defaults to None.
+        op_and (bool, optional): _description_. Defaults to True.
+
+    Returns:
+        bool: _description_
+    >>> qhxl_match('#meta+id', None, ['+id'])
+    True
+    >>> qhxl_match('#meta+name', None, ['+id', '+code'])
+    False
+    >>> qhxl_match('#meta+alt2+name', None, ['+alt+name', '+name+alt2'])
+    True
+    >>> qhxl_match('#meta+alt2+name', None, ['+name+alt2'])
+    True
+    >>> qhxl_match('#meta+alt+name', ['#country'], ['+name+alt'])
+    False
+    >>> qhxl_match('#meta+alt+name', ['#country'], ['+name+alt'], op_and=False)
+    True
+    """
     if not hashtag or not hashtag.startswith('#') or hashtag.find('+') == -1:
         return None
-    _okay_h = False if base_hashtags else None
-    _okay_a = False if attributes else None
+    _okay_h = False if search_hashtags else None
+    _okay_a = False if search_attributes else None
 
     _parts = hashtag.split('+')
     _de_facto_basi = _parts.pop(0).strip()
+    _de_facto_attrs = _parts
 
-    if base_hashtags and f'#{_de_facto_basi}' in base_hashtags:
+    if search_hashtags and f'#{_de_facto_basi}' in search_hashtags:
         _okay_h = True
-    if attributes:
-        pass
-    # @TODO ...
+    if search_attributes:
+        for sitem in search_attributes:
+            # sitem_attrs = sitem.strip().split('+')
+            sitem_attrs = list(filter(None, map(str.strip, sitem.split('+'))))
+            # print('sitem_attrs', sitem_attrs)
+            if len(sitem_attrs) == 0:
+                continue
+            _sitems_left = len(sitem_attrs)
+            for _attr_item in sitem_attrs:
+                if _attr_item in _de_facto_attrs:
+                    _sitems_left -= 1
+            if _sitems_left == 0:
+                # print('okay a')
+                _okay_a = True
+                break
 
-    return True
+    # print('_de_facto_attrs', _de_facto_attrs)
+    # print('_okay_h', _okay_h)
+    # print('_okay_a', _okay_a)
+    # print('_sitems_left', _sitems_left)
+    if (_okay_h is True and _okay_a is True) or \
+            (op_and is False and (_okay_h is True or _okay_a is True)):
+        return True
+    if (_okay_h is None and _okay_a is True) or \
+            (_okay_h is True and _okay_a is None):
+        return True
+
+    return False
