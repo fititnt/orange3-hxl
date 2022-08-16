@@ -1,2 +1,4 @@
 include orangecontrib/hxl/tutorials/*.ows
 include orangecontrib/hxl/widgets/icons/*
+
+include orangecontrib/referencedata/widgets/icons/*

@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 NAME = "Orange3-HXLVisualETL"
 
-VERSION = "0.1.0"
+VERSION = "0.1.5"
 
 AUTHOR = 'EticaAI'
 AUTHOR_EMAIL = 'rocha@ieee.org'
@@ -34,6 +34,7 @@ PACKAGES = find_packages()
 PACKAGE_DATA = {
     'orangecontrib.hxl': ['tutorials/*.ows'],
     'orangecontrib.hxl.widgets': ['icons/*'],
+    'orangecontrib.referencedata.widgets': ['icons/*'],
 }
 
 DATA_FILES = [
@@ -64,6 +65,7 @@ ENTRY_POINTS = {
         # Widget category specification can be seen in
         #    orangecontrib/hxl/widgets/__init__.py
         'HXL visual ETL = orangecontrib.hxl.widgets',
+        'HXL Reference Data = orangecontrib.referencedata.widgets',
     ),
 
     # Register widget help

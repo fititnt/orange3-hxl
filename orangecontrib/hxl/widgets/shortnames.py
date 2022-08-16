@@ -25,7 +25,7 @@ class HXLShortNames(OWWidget):
     Make HXLated input data with shorter variable names.
     """
     icon = "icons/mywidget.svg"
-    priority = 100  # where in the widget order it will appear
+    priority = 9995  # where in the widget order it will appear
     category = "HXL visual ETL"
     keywords = ["widget", "data"]
     want_main_area = False

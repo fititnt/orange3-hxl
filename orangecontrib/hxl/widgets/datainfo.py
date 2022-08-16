@@ -21,14 +21,14 @@ class HXLDataInfo(OWWidget):
     # and not shown in the menu.
     name = "HXL Data Info"
     # orangecontrib.hxl.widgets
-    id = "orangecontrib.hxl.widgets.datainfo"
+    # id = "orangecontrib.hxl.widgets.datainfo"
     description = """
-    For already HXLated input, attempt to infer some data transformations.
-    Intended to be used after orange generic File or CSV input.
+    [DRAFT] For already HXLated input, attempt to infer some data
+    transformations. Intended to be used after orange generic File or CSV input.
     """
     # icon = "icons/DataInfo.svg"
     icon = "icons/mywidget.svg"
-    priority = 100
+    priority = 9998
     # category = "HXL"
     category = "HXL visual ETL"
     keywords = ["information", "inspect", "widget"]

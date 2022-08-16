@@ -22,14 +22,14 @@ class HXLAuto(OWWidget):
     """HXL Statistical Role"""
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
-    name = "HXL Statistical Role"
+    name = "Statistical Role"
     # id = "orange.widgets.data.info"
     description = """
-    For already HXLated input, attempt to infer some data transformations.
-    Intended to be used after orange generic File or CSV input.
+    Change statistical role (the "feature", "target", "meta", "ignore")
+    using HXL
     """
     icon = "icons/mywidget.svg"
-    priority = 100  # where in the widget order it will appear
+    priority = 130  # where in the widget order it will appear
     category = "HXL visual ETL"
     keywords = ["widget", "data"]
     want_main_area = False
