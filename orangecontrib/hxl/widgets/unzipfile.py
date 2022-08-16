@@ -3,17 +3,17 @@ from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
-# from orangecontrib.hxl.hxlclasses import FileRAW, FileRAWCollection
+from orangecontrib.hxl.base import FileRAW, FileRAWCollection
 
 
 class HXLUnzipFile(OWWidget):
     """HXLUnzipFile"""
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
-    name = "Unzip File"
+    name = "Unzip Raw File"
     id = "orangecontrib.hxl.widgets.unzipfile"
     description = """
-    [DRAFT] Uncompress one file into one or more files
+    [DRAFT] Unzip (zip, gzip, bzip, ...) an FileRAW into an FileRAWCollection 
     """
     icon = "icons/mywidget.svg"
     priority = 60  # where in the widget order it will appear
@@ -27,19 +27,15 @@ class HXLUnzipFile(OWWidget):
     class Inputs:
         """Inputs"""
         # specify the name of the input and the type
-        data = Input("Data", Table, default=True)
-        # data = Input("FileRAW", FileRAW, default=True, auto_summary=False)
+        # data = Input("Data", Table)
+        data = Input("FileRAW", FileRAW, auto_summary=False)
 
     class Outputs:
         """Outputs"""
-        data = Output("Data", Table, default=True)
-
-        # data = Output(
-        #     "FileRAWCollection",
-        #     FileRAWCollection,
-        #     default=True,
-        #     auto_summary=False
-        # )
+        # if there are two or more outputs, default=True marks the default output
+        # data = Output("Data", Table, default=True, auto_summary=False)
+        # data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
+        data = Output("FileRAWCollection", FileRAWCollection, default=True, auto_summary=False)
 
     # same class can be initiated for Error and Information messages
     class Warning(OWWidget.Warning):
@@ -53,13 +49,13 @@ class HXLUnzipFile(OWWidget):
         self.label_box = gui.lineEdit(
             self.controlArea, self, "label", box="Text", callback=self.commit)
 
-    # @Inputs.data
-    # def set_data(self, data):
-    #     """set_data"""
-    #     if data:
-    #         self.data = data
-    #     else:
-    #         self.data = None
+    @Inputs.data
+    def set_data(self, data):
+        """set_data"""
+        if data:
+            self.data = data
+        else:
+            self.data = None
 
     def commit(self):
         """commit"""
