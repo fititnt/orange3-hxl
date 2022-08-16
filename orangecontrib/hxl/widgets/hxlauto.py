@@ -1,5 +1,6 @@
 """hxlauto"""
 
+import json
 import logging
 import numpy as np
 # from Orange.data import Table
@@ -119,9 +120,9 @@ class HXLAuto(OWWidget):
         if not self.data:
             self.infoa.setText("No input data yet")
             return None
-        else:
-            self.infoa.setText("Processing data...")
-            self.optionsBox.setDisabled(False)
+        # else:
+        #     self.infoa.setText("Processing data...")
+        #     self.optionsBox.setDisabled(False)
         # log.debug("commit: %s", self.data)
 
         # hxl_h_meta = None
@@ -176,6 +177,9 @@ class HXLAuto(OWWidget):
                 hxl_a_ignore=hxl_a_ignore,
             )
 
+            if _changes2:
+                self.infoa.setText(json.dumps(
+                    _changes2, indent=4, sort_keys=True, ensure_ascii=False))
             # self.Outputs.data.send(self.data)
             self.Outputs.data.send(extended_data_2)
             return None
@@ -213,6 +217,9 @@ class HXLAuto(OWWidget):
             extended_data)
         extended_data_2, _changes2 = orange_data_roles_ex_hxl(extended_data_3)
 
+        if _changes2:
+            self.infoa.setText(json.dumps(
+                _changes2, indent=4, sort_keys=True, ensure_ascii=False))
         self.Outputs.data.send(extended_data_2)
         # self.Outputs.data.send(extended_data)
         # self.Outputs.data.send(self.data)

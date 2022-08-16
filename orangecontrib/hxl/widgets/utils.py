@@ -244,33 +244,26 @@ def orange_data_roles_ex_hxl(
     hxl_a_ignore: list = None,
 ) -> Table:
 
-    log.exception(
-        f'>>> orange_data_roles_ex_hxl hxl_h_meta {hxl_h_meta}')
-    log.exception(
-        f'>>> orange_data_roles_ex_hxl hxl_a_meta {hxl_a_meta}')
-    log.exception(
-        f'>>> orange_data_roles_ex_hxl hxl_h_ignore {hxl_h_ignore}')
-    log.exception(
-        f'>>> orange_data_roles_ex_hxl hxl_h_ignore {hxl_h_ignore}')
-    log.exception(
-        f'>>> orange_data_roles_ex_hxl hxl_a_ignore {hxl_a_ignore}')
 
-    # NOTE: this widget assume orange_data_names_normalization() was used
-    #       earlier
+    _is_debug = True
     changes = {
-        # 'total': -1,
-        'to_meta': 0,
-        'to_ignore': 0
+        'from': {
+            'attribute': 0,
+            'class': 0,
+            'ignore': 0,
+            'meta': 0,
+        },
+        'to': {
+            'attribute': 0,
+            'class': 0,
+            'ignore': 0,
+            'meta': 0,
+        },
+        'total': 0,
     }
-    # log.exception(' >>>> self.data.domain.attributes')
-    # log.exception(type(self.data.domain.attributes))
-    # log.exception(self.data.domain.attributes)
-    # log.exception(' >>>> self.data.domain.class_vars')
-    # log.exception(type(self.data.domain.class_vars))
-    # log.exception(self.data.domain.class_vars)
-    # log.exception(' >>>> self.data.domain.metas')
-    # log.exception(type(self.data.domain.metas))
-    # log.exception(self.data.domain.metas)
+    if _is_debug:
+       changes['_debug'] = []
+
 
     def _normalize(textum: str) -> str:
         if not textum.startswith('#'):
@@ -286,75 +279,109 @@ def orange_data_roles_ex_hxl(
 
     def _needs_change(hashtag: str, status_quo: str) -> bool:
         """_needs_change
-        
+
         Return string with target group if necessary. It will always try
         stay with current Orange3 Roles before trying change to new ones
         """
+        # return 'meta'
         if not hashtag or not hashtag.startswith('#'):
             return False
+
+        log.exception(
+            f'>>> _needs_change test [{hashtag}] [{hxl_h_meta} {hxl_a_meta}]')
+        log.exception(qhxl_match(hashtag, hxl_h_meta,
+                      hxl_a_meta, op_and=False))
+
         if status_quo == 'meta' and \
-                qhxl_match(hashtag, hxl_h_meta, hxl_a_meta):
+                qhxl_match(hashtag, hxl_h_meta, hxl_a_meta, op_and=False):
             return False
         if status_quo == 'ignore' and \
-                qhxl_match(hashtag, hxl_h_ignore, hxl_h_ignore):
+                qhxl_match(hashtag, hxl_h_ignore, hxl_a_ignore, op_and=False):
             return False
+
+        # Common case: status_quo=attributes
+        # Common case: status_quo=class
         if status_quo != 'meta' and \
-                qhxl_match(hashtag, hxl_h_meta, hxl_a_meta):
+                qhxl_match(hashtag, hxl_h_meta, hxl_a_meta, op_and=False):
             return 'meta'
         if status_quo != 'ignore' and \
-                qhxl_match(hashtag, hxl_h_ignore, hxl_h_ignore):
+                qhxl_match(hashtag, hxl_h_ignore, hxl_a_ignore, op_and=False):
             return 'ignore'
 
         return None
 
     needs_update = False
-    new_attributes = []
-    history_new_names = []
+    # new_attributes = []
+    # history_new_names = []
 
     resultatum = {
-       'class' : [],
-       'meta' : [],
-       'ignore' : [],
+        'attributes': [],
+        'class': [],
+        'meta': [],
+        'ignore': [],
     }
 
     for item in orange_table.domain.attributes:
-        new_name = _normalize(item.name)
-        history_new_names.append(new_name)
+        changes['total'] += 1
+        statum_novo = _needs_change(item.name, 'attributes')
 
+        if statum_novo:
+            needs_update = True
+            changes['from']['attribute'] += 1
+            changes['to'][statum_novo] += 1
+            if _is_debug:
+                changes['_debug'].append(f'attribute->{statum_novo}[{item.name}]')
+            resultatum[statum_novo].append(item)
+        else:
+            resultatum['attributes'].append(item)
+
+    for item in orange_table.domain.metas:
+        changes['total'] += 1
         statum_novo = _needs_change(item.name, 'meta')
 
         if statum_novo:
             needs_update = True
+            changes['from']['meta'] += 1
+            changes['to'][statum_novo] += 1
+            if _is_debug:
+                changes['_debug'].append(f'meta->{statum_novo}[{item.name}]')
+            resultatum[statum_novo].append(item)
+        else:
+            resultatum['meta'].append(item)
 
-        new_attributes.append(item)
-
-    new_metas = []
-    for item in orange_table.domain.metas:
-        new_name = _normalize(item.name)
-        history_new_names.append(new_name)
-        if new_name != item.name:
-            needs_update = True
-            item = item.renamed(new_name)
-        new_metas.append(item)
-
-    new_class_vars = []
     for item in orange_table.domain.class_vars:
-        new_name = _normalize(item.name)
-        history_new_names.append(new_name)
-        if new_name != item.name:
+        changes['total'] += 1
+        statum_novo = _needs_change(item.name, 'class')
+
+        if statum_novo:
             needs_update = True
-            item = item.renamed(new_name)
-        new_class_vars.append(item)
+            changes['from']['class'] += 1
+            changes['to'][statum_novo] += 1
+            if _is_debug:
+                changes['_debug'].append(f'class->{statum_novo}[{item.name}]')
+            resultatum[statum_novo].append(item)
+        else:
+            resultatum['class'].append(item)
+
+    log.exception(
+        f'>>> orange_data_roles_ex_hxl meta')
+    log.exception(changes)
 
     if needs_update:
         log.exception(
             f'>>> orange_data_roles_ex_hxl changes necessary')
+        # new_domain = Domain(
+        #     new_attributes,
+        #     new_class_vars, new_metas
+        # )
         new_domain = Domain(
-            new_attributes,
-            new_class_vars, new_metas
+            resultatum['attributes'],
+            resultatum['class'],
+            resultatum['meta']
         )
         extended_data = orange_table.transform(new_domain)
-        return extended_data, None
+        # return extended_data, None
+        return extended_data, changes
     else:
         log.exception(
             f'>>> orange_data_roles_ex_hxl no changes necessary')
