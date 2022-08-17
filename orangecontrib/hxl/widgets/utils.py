@@ -27,7 +27,10 @@
 # pytest
 #    python3 -m doctest orangecontrib/hxl/widgets/utils.py
 
+from genericpath import exists
 import logging
+import os
+from pathlib import Path
 from typing import Any, Tuple, Union
 from orangecontrib.hxl.L999999999_0 import (
     hxl_hashtag_normalizatio,
@@ -48,6 +51,27 @@ HXL_BASE_ASSUME_IMPLICIT_HASHTAG = {
     'status+rem': '#status+rem',
     'date+rem': '#date+rem',
 }
+
+
+class DataVault:
+
+    default_data_vault: str = None
+    entrypoint: str = 'rawinput'
+    unzipedinput: str = 'unzipedinput'
+    transformedinput: str = 'transformedinput'
+
+    def __init__(self):
+        self.default_data_vault = f'{Path.home()}/.orange3data'
+
+    def initialize(self):
+        if not exists(self.default_data_vault):
+            os.makedirs(self.default_data_vault)
+            os.makedirs(self.default_data_vault + '/' + self.entrypoint)
+            os.makedirs(self.default_data_vault + '/' + self.unzipedinput)
+            os.makedirs(self.default_data_vault + '/' + self.transformedinput)
+
+    def is_initialized(self):
+        return exists(self.default_data_vault)
 
 
 def wkt_point_split(text: str) -> tuple:
@@ -244,7 +268,6 @@ def orange_data_roles_ex_hxl(
     hxl_a_ignore: list = None,
 ) -> Table:
 
-
     _is_debug = True
     changes = {
         'from': {
@@ -262,8 +285,7 @@ def orange_data_roles_ex_hxl(
         'total': 0,
     }
     if _is_debug:
-       changes['_debug'] = []
-
+        changes['_debug'] = []
 
     def _normalize(textum: str) -> str:
         if not textum.startswith('#'):
@@ -330,7 +352,8 @@ def orange_data_roles_ex_hxl(
             changes['from']['attribute'] += 1
             changes['to'][statum_novo] += 1
             if _is_debug:
-                changes['_debug'].append(f'attribute->{statum_novo}[{item.name}]')
+                changes['_debug'].append(
+                    f'attribute->{statum_novo}[{item.name}]')
             resultatum[statum_novo].append(item)
         else:
             resultatum['attributes'].append(item)

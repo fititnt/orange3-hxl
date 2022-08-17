@@ -22,7 +22,11 @@ class HXLDownloadFile(OWWidget):
     want_main_area = False
     resizing_enabled = False
 
-    label = Setting("")
+    res_id = Setting("")
+    res_hash = Setting("")
+    source_uri_main = Setting("")
+    source_uri_alt = Setting("")
+    source_uri_alt2 = Setting("")
 
     # class Inputs:
     #     """Inputs"""
@@ -44,8 +48,30 @@ class HXLDownloadFile(OWWidget):
         super().__init__()
         self.data = None
 
-        self.label_box = gui.lineEdit(
-            self.controlArea, self, "label", box="Text", callback=self.commit)
+        self.res_id_box = gui.lineEdit(
+            self.controlArea, self, "res_id", box="Friendly alias (optional)")
+
+        self.res_hash_box = gui.lineEdit(
+            self.controlArea, self, "res_hash", box="Internal hash")
+        self.res_hash_box.setDisabled(True)
+
+        self.main_uri_box = gui.lineEdit(
+            self.controlArea, self, "source_uri_main", box="Remote URI of main source", callback=self.commit)
+
+        self.alt_uri_box = gui.lineEdit(
+            self.controlArea, self, "source_uri_alt", box="Remote URI, backup alternative 1", callback=self.commit)
+
+        self.alt2_uri_box = gui.lineEdit(
+            self.controlArea, self, "source_uri_alt2", box="Remote URI, backup alternative 2", callback=self.commit)
+
+        gui.separator(self.controlArea)
+        self.optionsBox = gui.widgetBox(self.controlArea, "Options")
+
+        gui.button(self.optionsBox, self, "(Re)Download", callback=self.commit)
+
+        self.res_hash_box.setText('teste')
+
+        # self.optionsBox.setDisabled(False)
 
     # @Inputs.data
     # def set_data(self, data):

@@ -3,6 +3,8 @@ from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
+from orangecontrib.hxl.widgets.utils import DataVault
+
 # from orangecontrib.hxl.base import FileRAW, FileRAWCollection
 
 
@@ -47,8 +49,30 @@ class HXLDataVaultConf(OWWidget):
         super().__init__()
         self.data = None
 
-        self.label_box = gui.lineEdit(
-            self.controlArea, self, "label", box="Text", callback=self.commit)
+        self.data_vault = DataVault()
+
+        # self.label_box = gui.lineEdit(
+        #     self.controlArea, self, "label", box="Text", callback=self.commit)
+
+        self.optionsBox = gui.widgetBox(self.controlArea, "Main Data Vault")
+
+        box = gui.widgetBox(self.controlArea, "Info")
+        self.infoa = gui.widgetLabel(
+            box, 'DataVault will try initialize '
+            f'{self.data_vault.default_data_vault}'
+        )
+
+        self.main_data_vault_button = gui.button(
+            self.optionsBox, self,
+            "Initialize Main DataVault",
+            callback=self.initilize_data_vault
+        )
+
+        if self.data_vault.is_initialized():
+            self.optionsBox.setDisabled(True)
+            self.infoa.setText(
+                f'DataVault already initialized at '
+                f'{self.data_vault.default_data_vault}')
 
     # @Inputs.data
     # def set_data(self, data):
@@ -61,6 +85,20 @@ class HXLDataVaultConf(OWWidget):
     def commit(self):
         """commit"""
         self.Outputs.data.send(self.data)
+
+    def initilize_data_vault(self):
+        """commit"""
+        if not self.data_vault.is_initialized():
+            self.data_vault.initialize()
+        if self.data_vault.is_initialized():
+            self.optionsBox.setDisabled(True)
+            self.infoa.setText(
+                f'Success! Local storage will be at '
+                f'{self.data_vault.default_data_vault}')
+        else:
+            self.infoa.setText(
+                f'Something is wrong. Not able to initialize '
+                f'{self.data_vault.default_data_vault}')
 
     def send_report(self):
         """send_report"""
