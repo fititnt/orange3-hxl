@@ -13,12 +13,18 @@ import requests
 
 from orangecontrib.hxl.widgets.utils import bytes_to_human_readable
 
+VALT_BASE = f'{Path.home()}/.orange3data'
+ETL_RAW_FILE = 'rawinput'
+ETL_RAW_FILES = 'unzipedinput'  # @TODO rename to rawinputs
+
+
+# @TODO create some widged only for inspect other raw resources
 
 class DataVault:
 
     default_data_vault: str = None
     entrypoint: str = 'rawinput'
-    unzipedinput: str = 'unzipedinput'
+    unzipedinput: str = ETL_RAW_FILES
     transformedinput: str = 'transformedinput'
 
     def __init__(self):
@@ -28,7 +34,7 @@ class DataVault:
         if not exists(self.default_data_vault):
             os.makedirs(self.default_data_vault)
             os.makedirs(self.default_data_vault + '/' + self.entrypoint)
-            os.makedirs(self.default_data_vault + '/' + self.unzipedinput)
+            os.makedirs(self.default_data_vault + '/' + ETL_RAW_FILES)
             os.makedirs(self.default_data_vault + '/' + self.transformedinput)
 
     def is_initialized(self):
@@ -65,8 +71,11 @@ class DataVault:
         return _path + '/' + res_group + '/' + res_hash + '/' + res_hash
 
     @staticmethod
-    def resource_summary(res_group: str, res_hash: str) -> str:
-        _fullpath = DataVault.resource_path(res_group, res_hash)
+    def resource_summary(res_group: str, res_hash: str, res_direct: Path = None) -> str:
+        if res_direct and isinstance(res_direct, Path):
+            _fullpath = res_direct
+        else:
+            _fullpath = DataVault.resource_path(res_group, res_hash)
         if os.path.isfile(_fullpath):
             _stat = Path(_fullpath).stat()
             return {
@@ -75,10 +84,18 @@ class DataVault:
                 'path': _fullpath
             }
         elif os.path.isdir(_fullpath):
+            root_directory = Path(_fullpath)
+            _size = 0
+            _file_count = 0
+            for _item in root_directory.glob('**/*'):
+                if _item.is_file():
+                    _file_count += 1
+                    _size += _item.stat().st_size
+            # size = sum(f.stat().st_size for f in root_directory.glob('**/*') if f.is_file())
             # @TODO
             return {
-                'files': -1,
-                'size': -1,
+                'files': _file_count,
+                'size':  bytes_to_human_readable(_size),
                 'path': _fullpath
             }
         else:
@@ -95,15 +112,21 @@ class ResourceRAW(ABC):
     res_hash: str = None
     res_group: str = None
     res_alias: str = 'unnamed'
+    res_direct: str = None  # use case: file inside unziped resource
     # Not implemented
     disk_encrypted: bool = False
 
-    # @abstractmethod
-    # def move(self):
-    #     pass
+    @abstractmethod
+    def base(self):
+        pass
+
+    @abstractmethod
+    def ready(self):
+        pass
 
     def __str__(self):
-        return f'<{self.__class__.__name__}(res_hash={str(self.res_hash)})>'
+        return f'<{self.__class__.__name__}(res_hash={str(self.res_hash)}' + \
+            f' ,res_group={str(self.res_group)})>'
 
     def set_resource(self, res_hash: str, res_group: str, res_alias: str = None):
         self.res_hash = res_hash
@@ -111,48 +134,96 @@ class ResourceRAW(ABC):
         if res_alias and len(res_alias) > 0:
             self.res_alias = res_alias
 
+    @abstractmethod
+    def ready(self):
+        pass
+
+    def urn(self) -> str:
+        if self.res_direct:
+            return 'urn:data:' + str(self.res_direct)
+        elif self.res_hash:
+            return 'urn:data:' + self.res_group + ':' + self.res_hash
+        else:
+            return 'urn:data:void:void'
+
 
 class FileRAW(ResourceRAW):
-    pass
-    # auto_summary = False
-    # res_hash: str = None
-    # res_group: str = None
-    # res_alias: str = 'unnamed'
+    res_group = ETL_RAW_FILE
 
-    # # Not implemented
-    # disk_encrypted: bool = False
+    def base(self) -> str:
+        # return VALT_BASE + '/rawinput/' + self.res_hash + self.res_hash
+        if self.res_direct:
+            return f'{VALT_BASE}/{str(self.res_direct)}'
+        else:
+            return f'{VALT_BASE}/rawinput/{self.res_hash}/{self.res_hash}'
 
-    # def set_resource(self, res_hash: str, res_group: str, res_alias: str = None):
-    #     self.res_hash = res_hash
-    #     self.res_group = res_group
-    #     if res_alias and len(res_alias) > 0:
-    #         self.res_alias = res_alias
+    # def urn(self) -> str:
+    #     if self.res_direct:
+    #         return 'urn:data:' + self.res_direct
+    #     else:
+    #         return 'urn:data:' + self.res_group + ':' + self.res_hash
 
-    # def summarize(self):
-    #     pass
+    def set_direct(self, res_direct: str):
+        self.res_group = '_direct_'
+        # self.res_direct = str(res_direct)
+        self.res_direct = res_direct
+        return self
+
+    def ready(self):
+        if not self.res_hash or not self.res_group:
+            return None
+        return DataVault.resource_summary(
+            self.res_group, self.res_hash, self.res_direct)
 
 
 class FileRAWCollection(ResourceRAW):
-    pass
-    # auto_summary = False
-    # res_hash: str = None
-    # res_group: str = None
-    # res_alias: str = 'unnamed'
-    # # pass
+    res_group = ETL_RAW_FILES
 
-    # def summarize(self):
-    #     pass
+    def already_ready(self):
+        # @TODO actually try check if something change on source
+        return self.ready()
+
+    def base(self) -> str:
+        return f'{VALT_BASE}/unzipedinput/{self.res_hash}'
+
+    def ready(self):
+        # if self.res_direct is None and (not self.res_hash or not self.res_group):
+        #     return None
+
+        if exists(self.base()):
+            return True
+
+        return DataVault.resource_summary(
+            self.res_group, self.res_hash)
+
+    def select(self, parameters: str = '**/*'):
+        root_directory = Path(self.base())
+        # for _item in root_directory.glob('**/*'):
+        for _item in root_directory.glob(parameters):
+            if _item.is_file():
+                # @TODO actually allow select the file via interface
+                selected_path = _item.relative_to(VALT_BASE)
+                _file_raw = FileRAW()
+                _file_raw.res_hash = self.res_hash
+                _file_raw.set_direct(selected_path)
+                return _file_raw
+                # break
 
 
 def format_summary_details_hxl(data):
-    _fullpath = DataVault.resource_path(data.res_group, data.res_hash)
-    _res_summary = DataVault.resource_summary(data.res_group, data.res_hash)
+    if not data or not data.res_group or not data.res_hash:
+        return 'None'
+
+    #_fullpath = DataVault.resource_path(data.res_group, data.res_hash)
+    _res_summary = DataVault.resource_summary(
+        data.res_group, data.res_hash, data.res_direct)
     info = [
         f'Alias: <b>{data.res_alias}</b>'
         # f'Path: <b>{_fullpath}</b><br/>'
     ]
-    for key, value in _res_summary.items():
-        info.append(f'{key}: <b>{value}</b>')
+    if _res_summary:
+        for key, value in _res_summary.items():
+            info.append(f'{key}: <b>{value}</b>')
 
     return '<br/>'.join(info)
 
@@ -172,14 +243,32 @@ def format_summary_details_hxl(data):
 @summarize.register
 def summarize_(data: FileRAW):
     return PartialSummary(
-        'urn:data:' + data.res_group + ':' + data.res_hash + '#' + data.res_alias,
+        data.urn(),
         format_summary_details_hxl(data))
+    res_group = data.res_group if data.res_group else 'void'
+    res_hash = data.res_hash if data.res_hash else 'void'
+    res_alias = '#' + data.res_alias if data.res_alias else ''
+    if data.res_direct:
+        return PartialSummary(
+            # 'urn:data:' + data.res_direct,
+            data.urn(),
+            format_summary_details_hxl(data))
+    else:
+        return PartialSummary(
+            'urn:data:' + res_group + ':' + res_hash + res_alias,
+            format_summary_details_hxl(data))
 
 
 @summarize.register
 def summarize_(data: FileRAWCollection):
     return PartialSummary(
-        'urn:data:' + data.res_group + ':' + data.res_hash + '#' + data.res_alias,
+        data.urn(),
+        format_summary_details_hxl(data))
+    res_group = data.res_group if data.res_group else 'void'
+    res_hash = data.res_hash if data.res_hash else 'void'
+    res_alias = '#' + data.res_alias if data.res_alias else ''
+    return PartialSummary(
+        'urn:data:' + res_group + ':' + res_hash + res_alias,
         format_summary_details_hxl(data))
 
 # @summarize.register

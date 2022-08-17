@@ -6,6 +6,7 @@ from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
 from orangecontrib.hxl.base import FileRAW, FileRAWCollection
+from orangecontrib.hxl.widgets.utils import file_unzip
 
 log = logging.getLogger(__name__)
 
@@ -35,17 +36,17 @@ class HXLUnzipFile(OWWidget):
         """Inputs"""
         # specify the name of the input and the type
         # data = Input("Data", Table)
-        data = Input("FileRAW", FileRAW, auto_summary=False)
-        fileraw = Input("FileRAW", FileRAW, auto_summary=False)
-        log.exception('unzipfile class part Inputs')
+        # data = Input("FileRAW", FileRAW, auto_summary=False)
+        fileraw = Input("FileRAW", FileRAW)
+        # log.exception('unzipfile class part Inputs')
 
     class Outputs:
         """Outputs"""
         # if there are two or more outputs, default=True marks the default output
         # data = Output("Data", Table, default=True, auto_summary=False)
         #data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
-        data = Output("FileRAWCollection", FileRAWCollection,
-                      default=True)
+        # data = Output("FileRAWCollection", FileRAWCollection,
+        #               default=True)
         filerawcollection = Output("FileRAWCollection", FileRAWCollection,
                                    default=True)
 
@@ -56,34 +57,38 @@ class HXLUnzipFile(OWWidget):
 
     def __init__(self):
         super().__init__()
-        self.data = None
+        # self.data = None
         # self.source = None
         self.fileraw = None
+        self.filerawcollection = FileRAWCollection()
         # self.target = None
 
         log.exception('unzipfile init')
 
-        self.label_box = gui.lineEdit(
-            self.controlArea, self, "label", box="Text", callback=self.commit)
+        # self.label_box = gui.lineEdit(
+        #     self.controlArea, self, "label", box="Text", callback=self.commit)
 
         gui.separator(self.controlArea)
         box = gui.widgetBox(self.controlArea, "Info")
         self.infoa = gui.widgetLabel(box, "Waiting reference data")
 
-        if self.data is not None or self.fileraw is not None:
+        # if self.data is not None or self.fileraw is not None:
+        if self.fileraw is not None:
+            # log.exception(
+            #     f'unzipfile init something already ready ... [{str(self.data)}][{str(self.fileraw)}]')
             log.exception(
-                f'unzipfile init something already ready ... [{str(self.data)}][{str(self.fileraw)}]')
+                f'unzipfile init something already ready ... [{str(self.fileraw)}]')
             self.commit()
 
-    @Inputs.data
-    def set_data(self, data):
-        log.exception(f'unzipfile set_data ... [{str(data)}]')
-        """set_data"""
-        if data:
-            self.data = data
-            # self.infoa.setText(json.dumps(self.__dict__))
-        else:
-            self.data = None
+    # @Inputs.data
+    # def set_data(self, data):
+    #     log.exception(f'unzipfile set_data ... [{str(data)}]')
+    #     """set_data"""
+    #     if data:
+    #         self.data = data
+    #         # self.infoa.setText(json.dumps(self.__dict__))
+    #     else:
+    #         self.data = None
 
     @Inputs.fileraw
     def set_fileraw(self, fileraw):
@@ -93,26 +98,44 @@ class HXLUnzipFile(OWWidget):
         if fileraw:
             self.fileraw = fileraw
             # self.infoa.setText(json.dumps(self.__dict__))
+            self.commit()
         else:
             self.fileraw = None
 
     def commit(self):
         """commit"""
-        if not self.data and not self.fileraw:
+        # if not self.data and not self.fileraw:
+        #     return None
+        if not self.fileraw or self.fileraw.ready() is None:
             return None
 
         log.exception(f'unzipfile commit self.fileraw  [{str(self.fileraw)}]')
-        log.exception(f'unzipfile commit self.data  [{str(self.data)}]')
-        self.infoa.setText(json.dumps([self.data, self.fileraw], default=vars))
+        # log.exception(f'unzipfile commit self.data  [{str(self.data)}]')
+        # self.infoa.setText(json.dumps([self.data, self.fileraw], default=vars))
+        self.infoa.setText(json.dumps([self.fileraw], default=vars))
 
-        # self.Outputs.data.send(self.data)
+        self.filerawcollection.res_hash = self.fileraw.res_hash
 
-        if self.data:
-            self.Outputs.data.send(self.data)
+        if self.filerawcollection.already_ready():
+            log.exception(
+                f'unzipfile commit already_ready [{str(self.filerawcollection)}]')
+            self.Outputs.filerawcollection.send(self.filerawcollection)
+            return True
 
-        if self.fileraw:
+        file_unzip(self.fileraw.base(), self.filerawcollection.base())
+
+        log.exception(
+            f'unzipfile commit self.filerawcollection.ready() [{str(self.filerawcollection.ready())}]')
+
+        if self.filerawcollection and \
+                self.filerawcollection.ready() is not None:
             # @TODO fix this part
-            self.Outputs.filerawcollection.send(self.fileraw)
+            log.exception(
+                f'unzipfile commit OKAY [{str(self.filerawcollection)}]')
+            self.Outputs.filerawcollection.send(self.filerawcollection)
+        else:
+            log.exception(
+                f'unzipfile commit NOT OKAY [{str(self.filerawcollection)}]')
 
     def send_report(self):
         """send_report"""

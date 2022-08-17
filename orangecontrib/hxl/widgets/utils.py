@@ -32,6 +32,7 @@ import logging
 from typing import Any, Tuple, Union
 
 import zlib
+from zipfile import ZipFile
 
 
 from orangecontrib.hxl.L999999999_0 import (
@@ -537,3 +538,13 @@ def qhxl_match(
         return True
 
     return False
+
+
+def file_unzip(source: str, target: str):
+
+    # Create a ZipFile Object and load sample.zip in it
+    with ZipFile(source, 'r') as zipObj:
+        # Extract all the contents of zip file in current directory
+        zipObj.extractall(target)
+
+    log.exception(f'file_unzip [{str(source)}] [{str(target)}]')

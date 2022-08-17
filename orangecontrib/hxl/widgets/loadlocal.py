@@ -30,7 +30,7 @@ class HXLLoadLocal(OWWidget):
         """Inputs"""
         # specify the name of the input and the type
         # data = Input("Data", Table)
-        data = Input("FileRAW", FileRAW, auto_summary=False)
+        fileraw = Input("FileRAW", FileRAW)
         # data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
 
     class Outputs:
@@ -45,6 +45,7 @@ class HXLLoadLocal(OWWidget):
 
     def __init__(self):
         super().__init__()
+        self.fileraw = None
         self.data = None
 
         self.label_box = gui.lineEdit(
@@ -52,16 +53,26 @@ class HXLLoadLocal(OWWidget):
 
         log.exception('HXLLoadLocal init')
 
-    @Inputs.data
-    def set_data(self, data):
-        """set_data"""
-        if data:
-            self.data = data
+    # @Inputs.data
+    # def set_data(self, data):
+    #     """set_data"""
+    #     if data:
+    #         self.data = data
+    #     else:
+    #         self.data = None
+
+    @Inputs.fileraw
+    def set_fileraw(self, fileraw):
+        """set_fileraw"""
+        if fileraw:
+            self.fileraw = fileraw
         else:
-            self.data = None
+            self.fileraw = None
 
     def commit(self):
         """commit"""
+        if not self.data:
+            return None
 
         log.exception('commit init')
         self.Outputs.data.send(self.data)

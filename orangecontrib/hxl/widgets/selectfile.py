@@ -33,14 +33,15 @@ class HXLSelectFile(OWWidget):
         # specify the name of the input and the type
         # data = Input("Data", Table)
         # data = Input("FileRAWCollection", FileRAWCollection)
-        data = Input("FileRAWCollection",
-                     FileRAWCollection, auto_summary=False)
+        filerawcollection = Input("FileRAWCollection",
+                                  FileRAWCollection)
 
     class Outputs:
         """Outputs"""
         # if there are two or more outputs, default=True marks the default output
         # data = Output("Data", Table, default=True, auto_summary=False)
-        data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
+        # data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
+        fileraw = Output("FileRAW", FileRAW)
 
     # same class can be initiated for Error and Information messages
     class Warning(OWWidget.Warning):
@@ -49,26 +50,32 @@ class HXLSelectFile(OWWidget):
 
     def __init__(self):
         super().__init__()
-        self.data = None
+        self.filerawcollection = None
+        self.fileraw = None
 
         self.label_box = gui.lineEdit(
             self.controlArea, self, "label", box="Text", callback=self.commit)
 
         log.exception('HXLSelectFile init')
 
-    @Inputs.data
-    def set_data(self, data):
+    @Inputs.filerawcollection
+    def set_filerawcollection(self, filerawcollection):
         """set_data"""
-        if data:
-            self.data = data
+        if filerawcollection:
+            self.filerawcollection = filerawcollection
+            self.commit()
         else:
-            self.data = None
+            self.filerawcollection = None
 
     def commit(self):
         """commit"""
+        if not self.filerawcollection or not self.filerawcollection.ready():
+            log.exception('HXLSelectFile commit not ready yet')
+            return None
 
-        log.exception('HXLSelectFile commit')
-        self.Outputs.data.send(self.data)
+        fileraw = self.filerawcollection.select()
+        log.exception(f'HXLSelectFile commit [{str(fileraw)}]')
+        self.Outputs.fileraw.send(fileraw)
 
     def send_report(self):
         """send_report"""
