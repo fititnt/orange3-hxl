@@ -245,18 +245,6 @@ def summarize_(data: FileRAW):
     return PartialSummary(
         data.urn(),
         format_summary_details_hxl(data))
-    res_group = data.res_group if data.res_group else 'void'
-    res_hash = data.res_hash if data.res_hash else 'void'
-    res_alias = '#' + data.res_alias if data.res_alias else ''
-    if data.res_direct:
-        return PartialSummary(
-            # 'urn:data:' + data.res_direct,
-            data.urn(),
-            format_summary_details_hxl(data))
-    else:
-        return PartialSummary(
-            'urn:data:' + res_group + ':' + res_hash + res_alias,
-            format_summary_details_hxl(data))
 
 
 @summarize.register
@@ -264,22 +252,41 @@ def summarize_(data: FileRAWCollection):
     return PartialSummary(
         data.urn(),
         format_summary_details_hxl(data))
-    res_group = data.res_group if data.res_group else 'void'
-    res_hash = data.res_hash if data.res_hash else 'void'
-    res_alias = '#' + data.res_alias if data.res_alias else ''
-    return PartialSummary(
-        'urn:data:' + res_group + ':' + res_hash + res_alias,
-        format_summary_details_hxl(data))
-
-# @summarize.register
-# def summarize_(data: FileRAW):
-#     return PartialSummary(
-#         data.approx_len(),
-#         format_summary_details(data, format=Qt.RichText))
 
 
-# @summarize.register
-# def summarize_(data: FileRAWCollection):
-#     return PartialSummary(
-#         data.approx_len(),
-#         format_summary_details(data, format=Qt.RichText))
+# from Orange.widgets.data.owfile import OWFile
+# # from Orange.widgets.widget import OWWidget, Input, Output, Msg
+# from Orange.widgets.widget import Input
+
+
+# class PatchWOFileInputs:
+#     fileraw = Input(
+#         "FileRAW", FileRAW)
+
+# # @Inputs.fileraw
+# def set_fileraw(self, fileraw):
+#     """set_fileraw"""
+#     #log.exception(f'unzipfile set_fileraw [{str(fileraw)}]')
+#     if fileraw:
+#         self.fileraw = fileraw
+#         self.commit()
+#     else:
+#         self.fileraw = None
+
+# OWFile.Inputs = PatchWOFileInputs
+# # OWFile.set_fileraw = set_fileraw
+
+# OWFile.fileraw.__setattr__ = set_fileraw
+
+# OWFilePatched = OWFile
+
+# class OWFilePatched(OWFile):
+#     class Inputs:
+#         """Inputs"""
+#         # specify the name of the input and the type
+#         # data = Input("Data", Table)
+#         # data = Input("FileRAWCollection", FileRAWCollection)
+#         fileraw = Input(
+#             "FileRAW", FileRAW)
+#         filerawcollection = Input(
+#             "FileRAWCollection", FileRAWCollection)

@@ -57,3 +57,12 @@ pip install Orange3-Survival-Analysis
 ## To re-install later all the things
 pip uninstall Orange3-HXLvisualETL orange3 Orange3-Geo Orange3-Timeseries orange3-text Orange3-Survival-Analysis Orange3-WorldHappiness Orange3-Explain
 -->
+
+<!--
+
+@TODO use this as JSON example input https://vocabulary.unocha.org/json/beta-v4/countries.json
+@TODO this is excel, not sure if we enable without HXProxy https://docs.google.com/spreadsheets/d/1NjSI2LaS3SqbgYc0HdD8oIb7lofGtiHgoKKATCpwVdY/edit#gid=1088874596
+      https://proxy.hxlstandard.org/data.csv?dest=data_edit&filter01=cut&cut-skip-untagged01=on&strip-headers=on&force=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1NjSI2LaS3SqbgYc0HdD8oIb7lofGtiHgoKKATCpwVdY%2Fedit%23gid%3D1088874596
+
+@TODO CSV
+-->

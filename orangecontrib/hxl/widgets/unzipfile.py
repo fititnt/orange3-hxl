@@ -92,12 +92,11 @@ class HXLUnzipFile(OWWidget):
 
     @Inputs.fileraw
     def set_fileraw(self, fileraw):
-        """set_data"""
+        """set_fileraw"""
 
         log.exception(f'unzipfile set_fileraw [{str(fileraw)}]')
         if fileraw:
             self.fileraw = fileraw
-            # self.infoa.setText(json.dumps(self.__dict__))
             self.commit()
         else:
             self.fileraw = None

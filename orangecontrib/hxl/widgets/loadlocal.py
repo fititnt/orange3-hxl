@@ -66,12 +66,13 @@ class HXLLoadLocal(OWWidget):
         """set_fileraw"""
         if fileraw:
             self.fileraw = fileraw
+            self.commit()
         else:
             self.fileraw = None
 
     def commit(self):
         """commit"""
-        if not self.data:
+        if not self.fileraw:
             return None
 
         log.exception('commit init')
