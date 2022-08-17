@@ -33,7 +33,7 @@ from typing import Any, Tuple, Union
 
 import zlib
 from zipfile import ZipFile
-
+import pandas as pd
 
 from orangecontrib.hxl.L999999999_0 import (
     hxl_hashtag_normalizatio,
@@ -43,6 +43,10 @@ from orangecontrib.hxl.L999999999_0 import (
     # # (...)
 )
 from Orange.data import Domain, Table
+
+from Orange.widgets.data.owcsvimport import (
+    pandas_to_table
+)
 
 log = logging.getLogger(__name__)
 
@@ -179,6 +183,24 @@ def bytes_to_human_readable(size, precision=2):
         suffixIndex += 1  # increment the index of the suffix
         size = size/1024.0  # apply the division
     return "%.*f%s" % (precision, size, suffixes[suffixIndex])
+
+
+def file_unzip(source: str, target: str):
+
+    # Create a ZipFile Object and load sample.zip in it
+    with ZipFile(source, 'r') as zipObj:
+        # Extract all the contents of zip file in current directory
+        zipObj.extractall(target)
+
+    log.exception(f'file_unzip [{str(source)}] [{str(target)}]')
+
+
+def file_csv_to_pandas(file):
+    return pd.read_csv(file)
+
+
+def file_pandas_to_table(df):
+    return pandas_to_table(df)
 
 
 def orange_data_names_normalization(
@@ -538,13 +560,3 @@ def qhxl_match(
         return True
 
     return False
-
-
-def file_unzip(source: str, target: str):
-
-    # Create a ZipFile Object and load sample.zip in it
-    with ZipFile(source, 'r') as zipObj:
-        # Extract all the contents of zip file in current directory
-        zipObj.extractall(target)
-
-    log.exception(f'file_unzip [{str(source)}] [{str(target)}]')
