@@ -30,9 +30,10 @@ class DataVault:
     def is_initialized(self):
         return exists(self.default_data_vault)
 
-    def download_resource(self, res_hash: str, source_uri: str, force: bool = False):
+    def download_resource(
+            self, res_hash: str, source_uri: str, force: bool = False):
         if not self.is_initialized():
-            raise ExecError('Not initialized')
+            raise RuntimeError('Not initialized')
 
         base = self.default_data_vault + '/' + self.entrypoint + '/' + res_hash
         fullname = base + '/' + res_hash
@@ -50,9 +51,12 @@ class DataVault:
 
 
 class FileRAW:
-    auto_summary = False
-    res_hash = None
-    res_group = None
+    # auto_summary = False
+    res_hash: str = None
+    res_group: str = None
+
+    # Not implemented
+    disk_encrypted: bool = False
 
     def set_resource(self, res_hash: str, res_group: str):
         self.res_hash = res_hash

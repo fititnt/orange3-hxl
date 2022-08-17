@@ -1,9 +1,10 @@
+import json
 from Orange.data import Table
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
-from orangecontrib.hxl.widgets.utils import DataVault
+from orangecontrib.hxl.base import DataVault
 
 # from orangecontrib.hxl.base import FileRAW, FileRAWCollection
 
@@ -49,7 +50,7 @@ class HXLDataVaultConf(OWWidget):
         super().__init__()
         self.data = None
 
-        self.data_vault = DataVault()
+        self.vault = DataVault()
 
         # self.label_box = gui.lineEdit(
         #     self.controlArea, self, "label", box="Text", callback=self.commit)
@@ -59,7 +60,7 @@ class HXLDataVaultConf(OWWidget):
         box = gui.widgetBox(self.controlArea, "Info")
         self.infoa = gui.widgetLabel(
             box, 'DataVault will try initialize '
-            f'{self.data_vault.default_data_vault}'
+            f'{self.vault.default_data_vault}'
         )
 
         self.main_data_vault_button = gui.button(
@@ -68,11 +69,11 @@ class HXLDataVaultConf(OWWidget):
             callback=self.initilize_data_vault
         )
 
-        if self.data_vault.is_initialized():
+        if self.vault.is_initialized():
             self.optionsBox.setDisabled(True)
             self.infoa.setText(
                 f'DataVault already initialized at '
-                f'{self.data_vault.default_data_vault}')
+                f'{self.vault.default_data_vault}')
 
     # @Inputs.data
     # def set_data(self, data):
@@ -84,21 +85,23 @@ class HXLDataVaultConf(OWWidget):
 
     def commit(self):
         """commit"""
+        # self.infoa.setText(json.dumps(self.__dict__))
+
         self.Outputs.data.send(self.data)
 
     def initilize_data_vault(self):
         """commit"""
-        if not self.data_vault.is_initialized():
-            self.data_vault.initialize()
-        if self.data_vault.is_initialized():
+        if not self.vault.is_initialized():
+            self.vault.initialize()
+        if self.vault.is_initialized():
             self.optionsBox.setDisabled(True)
             self.infoa.setText(
                 f'Success! Local storage will be at '
-                f'{self.data_vault.default_data_vault}')
+                f'{self.vault.default_data_vault}')
         else:
             self.infoa.setText(
                 f'Something is wrong. Not able to initialize '
-                f'{self.data_vault.default_data_vault}')
+                f'{self.vault.default_data_vault}')
 
     def send_report(self):
         """send_report"""

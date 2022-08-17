@@ -1,3 +1,4 @@
+import logging
 from Orange.data import Table
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
@@ -7,6 +8,8 @@ from orangecontrib.hxl.base import FileRAW
 from orangecontrib.hxl.widgets.utils import hash_intentionaly_weak
 
 from orangecontrib.hxl.base import DataVault
+
+log = logging.getLogger(__name__)
 
 
 class HXLDownloadFile(OWWidget):
@@ -31,7 +34,7 @@ class HXLDownloadFile(OWWidget):
     source_uri_alt = Setting("")
     source_uri_alt2 = Setting("")
 
-    active_fileraw = None
+    # active_fileraw = None
 
     # class Inputs:
     #     """Inputs"""
@@ -43,6 +46,7 @@ class HXLDownloadFile(OWWidget):
         # if there are two or more outputs, default=True marks the default output
         # data = Output("Data", Table, default=True, auto_summary=False)
         data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
+        fileraw = Output("FileRAW", FileRAW, default=True, auto_summary=False)
 
     # same class can be initiated for Error and Information messages
     class Warning(OWWidget.Warning):
@@ -53,8 +57,8 @@ class HXLDownloadFile(OWWidget):
         super().__init__()
         self.data = None
 
-        self.data_vault = DataVault()
-        self.active_fileraw = FileRAW()
+        self.vault = DataVault()
+        self.fileraw = FileRAW()
 
         self.res_id_box = gui.lineEdit(
             self.controlArea, self, "res_id", box="Friendly alias (optional)")
@@ -83,6 +87,8 @@ class HXLDownloadFile(OWWidget):
             self.controlArea, self, "res_hash", box="Internal ID")
         self.res_hash_box.setDisabled(True)
 
+        log.exception('downloadfile init')
+
     # @Inputs.data
     # def set_data(self, data):
     #     """set_data"""
@@ -106,13 +112,20 @@ class HXLDownloadFile(OWWidget):
             self.infoa.setText("_hash_refs_b " + res_hash)
             self.res_hash_box.setText(res_hash)
 
-        result = self.data_vault.download_resource(res_hash, res_uri)
+        result = self.vault.download_resource(res_hash, res_uri)
 
         self.infoa.setText('result download_resource ' + str(result))
 
-        self.active_fileraw.set_resource(res_hash, 'rawinput')
+        self.fileraw.set_resource(res_hash, 'rawinput')
 
-        self.Outputs.data.send(self.data)
+        # self.Outputs.data.send(self.data)
+        self.Outputs.data.send(self.fileraw)
+        self.Outputs.fileraw.send(self.fileraw)
+
+        log.exception(
+            f'downloadfile commit self.Outputs.fileraw [{str(self.Outputs.fileraw)}]')
+        log.exception(
+            f'downloadfile commit self.Outputs.data [{str(self.Outputs.data)}]')
 
     def send_report(self):
         """send_report"""
