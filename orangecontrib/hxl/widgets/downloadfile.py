@@ -4,6 +4,9 @@ from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
 from orangecontrib.hxl.base import FileRAW
+from orangecontrib.hxl.widgets.utils import hash_intentionaly_weak
+
+from orangecontrib.hxl.base import DataVault
 
 
 class HXLDownloadFile(OWWidget):
@@ -28,6 +31,8 @@ class HXLDownloadFile(OWWidget):
     source_uri_alt = Setting("")
     source_uri_alt2 = Setting("")
 
+    active_fileraw = None
+
     # class Inputs:
     #     """Inputs"""
     #     # specify the name of the input and the type
@@ -48,12 +53,11 @@ class HXLDownloadFile(OWWidget):
         super().__init__()
         self.data = None
 
+        self.data_vault = DataVault()
+        self.active_fileraw = FileRAW()
+
         self.res_id_box = gui.lineEdit(
             self.controlArea, self, "res_id", box="Friendly alias (optional)")
-
-        self.res_hash_box = gui.lineEdit(
-            self.controlArea, self, "res_hash", box="Internal hash")
-        self.res_hash_box.setDisabled(True)
 
         self.main_uri_box = gui.lineEdit(
             self.controlArea, self, "source_uri_main", box="Remote URI of main source", callback=self.commit)
@@ -69,9 +73,15 @@ class HXLDownloadFile(OWWidget):
 
         gui.button(self.optionsBox, self, "(Re)Download", callback=self.commit)
 
-        self.res_hash_box.setText('teste')
+        # self.res_hash_box.setText('teste')
 
-        # self.optionsBox.setDisabled(False)
+        gui.separator(self.controlArea)
+        box = gui.widgetBox(self.controlArea, "Info")
+        self.infoa = gui.widgetLabel(box, "No comments")
+
+        self.res_hash_box = gui.lineEdit(
+            self.controlArea, self, "res_hash", box="Internal ID")
+        self.res_hash_box.setDisabled(True)
 
     # @Inputs.data
     # def set_data(self, data):
@@ -83,6 +93,25 @@ class HXLDownloadFile(OWWidget):
 
     def commit(self):
         """commit"""
+        _hash_refs_a = self.res_id_box.text()
+        _hash_refs_b = self.main_uri_box.text()
+        res_uri = self.main_uri_box.text()
+        if _hash_refs_a:
+            res_hash = str(hash_intentionaly_weak(_hash_refs_a))
+            self.infoa.setText(
+                "_hash_refs_a " + res_hash)
+            self.res_hash_box.setText(res_hash)
+        else:
+            res_hash = str(hash_intentionaly_weak(_hash_refs_b))
+            self.infoa.setText("_hash_refs_b " + res_hash)
+            self.res_hash_box.setText(res_hash)
+
+        result = self.data_vault.download_resource(res_hash, res_uri)
+
+        self.infoa.setText('result download_resource ' + str(result))
+
+        self.active_fileraw.set_resource(res_hash, 'rawinput')
+
         self.Outputs.data.send(self.data)
 
     def send_report(self):

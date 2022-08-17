@@ -27,11 +27,13 @@
 # pytest
 #    python3 -m doctest orangecontrib/hxl/widgets/utils.py
 
-from genericpath import exists
 import logging
-import os
-from pathlib import Path
+
 from typing import Any, Tuple, Union
+
+import zlib
+
+
 from orangecontrib.hxl.L999999999_0 import (
     hxl_hashtag_normalizatio,
     hxl_hashtag_to_bcp47,
@@ -53,25 +55,8 @@ HXL_BASE_ASSUME_IMPLICIT_HASHTAG = {
 }
 
 
-class DataVault:
-
-    default_data_vault: str = None
-    entrypoint: str = 'rawinput'
-    unzipedinput: str = 'unzipedinput'
-    transformedinput: str = 'transformedinput'
-
-    def __init__(self):
-        self.default_data_vault = f'{Path.home()}/.orange3data'
-
-    def initialize(self):
-        if not exists(self.default_data_vault):
-            os.makedirs(self.default_data_vault)
-            os.makedirs(self.default_data_vault + '/' + self.entrypoint)
-            os.makedirs(self.default_data_vault + '/' + self.unzipedinput)
-            os.makedirs(self.default_data_vault + '/' + self.transformedinput)
-
-    def is_initialized(self):
-        return exists(self.default_data_vault)
+def hash_intentionaly_weak(text) -> str:
+    return zlib.crc32(bytes(text, "utf8"))
 
 
 def wkt_point_split(text: str) -> tuple:
