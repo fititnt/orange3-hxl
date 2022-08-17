@@ -33,7 +33,8 @@ from typing import Any, Tuple, Union
 
 import zlib
 from zipfile import ZipFile
-import pandas as pd
+# import pandas as pd
+import pandas as pandas
 
 from orangecontrib.hxl.L999999999_0 import (
     hxl_hashtag_normalizatio,
@@ -45,7 +46,7 @@ from orangecontrib.hxl.L999999999_0 import (
 from Orange.data import Domain, Table
 
 from Orange.widgets.data.owcsvimport import (
-    pandas_to_table
+    pandas_to_table as _orange_pandas_to_table
 )
 
 log = logging.getLogger(__name__)
@@ -193,14 +194,6 @@ def file_unzip(source: str, target: str):
         zipObj.extractall(target)
 
     log.exception(f'file_unzip [{str(source)}] [{str(target)}]')
-
-
-def file_csv_to_pandas(file):
-    return pd.read_csv(file)
-
-
-def file_pandas_to_table(df):
-    return pandas_to_table(df)
 
 
 def orange_data_names_normalization(
@@ -439,6 +432,11 @@ def orange_data_roles_ex_hxl(
         return orange_table, changes
 
 
+def pandas_to_table(df) -> Table:
+    """pandas_to_table"""
+    return _orange_pandas_to_table(df)
+
+
 def string_to_list(
         text: str,
         delimiters: list = None,
@@ -560,3 +558,54 @@ def qhxl_match(
         return True
 
     return False
+
+
+class RawFileExporter:
+
+    @staticmethod
+    def json_normalize(file, **args):
+        # return pandas.json_normalize(file)
+        try:
+            return pandas.json_normalize(file)
+        except (ValueError, AttributeError):
+            return None
+
+    @staticmethod
+    def read_csv(file, **args):
+        return pandas.read_csv(file)
+
+    @staticmethod
+    def read_json(file, **args):
+        try:
+            return pandas.read_json(file)
+        except (ValueError, AttributeError):
+            return None
+
+    @staticmethod
+    def read_table(file, **args):
+        try:
+            return pandas.read_table(file)
+        except (ValueError, AttributeError):
+            return None
+
+    @staticmethod
+    def read_xml(file, **args):
+        try:
+            return pandas.read_xml(file)
+        # except (ValueError, AttributeError, lxml.etree.XMLSyntaxError):
+        except:
+            return None
+
+
+# def rawfile_csv_to_pandas(file) -> pandas.DataFrame:
+#     return pandas.read_csv(file)
+
+
+# def rawfile_json_to_pandas(file) -> pandas.DataFrame:
+#     # pandas.read_json
+#     return pandas.read_json(file)
+
+
+# def rawfile_json_normalize_to_pandas(file) -> pandas.DataFrame:
+#     # pandas.json_normalize
+#     return pd.json_normalize(file)
