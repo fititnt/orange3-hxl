@@ -1,9 +1,13 @@
+import logging
+
 from Orange.data import Table
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
 from orangecontrib.hxl.base import FileRAW
+
+log = logging.getLogger(__name__)
 
 class HXLLoadLocal(OWWidget):
     """HXLLoadLocal"""
@@ -46,6 +50,8 @@ class HXLLoadLocal(OWWidget):
         self.label_box = gui.lineEdit(
             self.controlArea, self, "label", box="Text", callback=self.commit)
 
+        log.exception('HXLLoadLocal init')
+
     @Inputs.data
     def set_data(self, data):
         """set_data"""
@@ -56,6 +62,8 @@ class HXLLoadLocal(OWWidget):
 
     def commit(self):
         """commit"""
+
+        log.exception('commit init')
         self.Outputs.data.send(self.data)
 
     def send_report(self):

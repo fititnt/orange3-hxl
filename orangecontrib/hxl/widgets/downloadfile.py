@@ -45,7 +45,8 @@ class HXLDownloadFile(OWWidget):
         """Outputs"""
         # if there are two or more outputs, default=True marks the default output
         # data = Output("Data", Table, default=True, auto_summary=False)
-        data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
+        # data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
+        data = Output("FileRAW", FileRAW)
         # fileraw = Output("FileRAW", FileRAW, default=True, auto_summary=False)
         fileraw = Output("FileRAW", FileRAW, default=True)
 
@@ -130,13 +131,13 @@ class HXLDownloadFile(OWWidget):
         self.fileraw.set_resource(res_hash, 'rawinput')
 
         # self.Outputs.data.send(self.data)
-        self.Outputs.data.send(self.fileraw)
+        # self.Outputs.data.send(self.fileraw)
         self.Outputs.fileraw.send(self.fileraw)
 
         log.exception(
-            f'downloadfile commit self.Outputs.fileraw [{str(self.Outputs.fileraw)}]')
+            f'downloadfile commit self.Outputs.fileraw [{str(self.fileraw)}] [{str(self.Outputs.fileraw)}]')
         log.exception(
-            f'downloadfile commit self.Outputs.data [{str(self.Outputs.data)}]')
+            f'downloadfile commit self.Outputs.data [{str(self.data)}] [{str(self.Outputs.data)}]')
 
     def send_report(self):
         """send_report"""

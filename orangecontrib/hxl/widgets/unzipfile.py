@@ -37,6 +37,7 @@ class HXLUnzipFile(OWWidget):
         # data = Input("Data", Table)
         data = Input("FileRAW", FileRAW, auto_summary=False)
         fileraw = Input("FileRAW", FileRAW, auto_summary=False)
+        log.exception('unzipfile class part Inputs')
 
     class Outputs:
         """Outputs"""
@@ -44,7 +45,9 @@ class HXLUnzipFile(OWWidget):
         # data = Output("Data", Table, default=True, auto_summary=False)
         #data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
         data = Output("FileRAWCollection", FileRAWCollection,
-                      default=True, auto_summary=False)
+                      default=True)
+        filerawcollection = Output("FileRAWCollection", FileRAWCollection,
+                                   default=True)
 
     # same class can be initiated for Error and Information messages
     class Warning(OWWidget.Warning):
@@ -54,7 +57,7 @@ class HXLUnzipFile(OWWidget):
     def __init__(self):
         super().__init__()
         self.data = None
-        self.source = None
+        # self.source = None
         self.fileraw = None
         # self.target = None
 
@@ -67,7 +70,10 @@ class HXLUnzipFile(OWWidget):
         box = gui.widgetBox(self.controlArea, "Info")
         self.infoa = gui.widgetLabel(box, "Waiting reference data")
 
-        self.commit()
+        if self.data is not None or self.fileraw is not None:
+            log.exception(
+                f'unzipfile init something already ready ... [{str(self.data)}][{str(self.fileraw)}]')
+            self.commit()
 
     @Inputs.data
     def set_data(self, data):
@@ -95,10 +101,18 @@ class HXLUnzipFile(OWWidget):
         if not self.data and not self.fileraw:
             return None
 
-        log.exception(f'unzipfile commit self.fileraw  [{str(self.fileraw )}]')
-        log.exception(f'unzipfile commit self.data  [{str(self.data )}]')
-        self.infoa.setText(json.dumps(self.fileraw))
-        self.Outputs.data.send(self.data)
+        log.exception(f'unzipfile commit self.fileraw  [{str(self.fileraw)}]')
+        log.exception(f'unzipfile commit self.data  [{str(self.data)}]')
+        self.infoa.setText(json.dumps([self.data, self.fileraw], default=vars))
+
+        # self.Outputs.data.send(self.data)
+
+        if self.data:
+            self.Outputs.data.send(self.data)
+
+        if self.fileraw:
+            # @TODO fix this part
+            self.Outputs.filerawcollection.send(self.fileraw)
 
     def send_report(self):
         """send_report"""

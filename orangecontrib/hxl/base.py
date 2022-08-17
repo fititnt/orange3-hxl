@@ -1,4 +1,5 @@
 
+from abc import ABC, abstractmethod
 from orangewidget.utils.signals import summarize, PartialSummary
 from Orange.widgets.utils.state_summary import format_summary_details, \
     format_multiple_summaries
@@ -90,14 +91,19 @@ class DataVault:
             # }
 
 
-class FileRAW:
-    # auto_summary = False
+class ResourceRAW(ABC):
     res_hash: str = None
     res_group: str = None
     res_alias: str = 'unnamed'
-
     # Not implemented
     disk_encrypted: bool = False
+
+    # @abstractmethod
+    # def move(self):
+    #     pass
+
+    def __str__(self):
+        return f'<{self.__class__.__name__}(res_hash={str(self.res_hash)})>'
 
     def set_resource(self, res_hash: str, res_group: str, res_alias: str = None):
         self.res_hash = res_hash
@@ -105,15 +111,33 @@ class FileRAW:
         if res_alias and len(res_alias) > 0:
             self.res_alias = res_alias
 
+
+class FileRAW(ResourceRAW):
+    pass
+    # auto_summary = False
+    # res_hash: str = None
+    # res_group: str = None
+    # res_alias: str = 'unnamed'
+
+    # # Not implemented
+    # disk_encrypted: bool = False
+
+    # def set_resource(self, res_hash: str, res_group: str, res_alias: str = None):
+    #     self.res_hash = res_hash
+    #     self.res_group = res_group
+    #     if res_alias and len(res_alias) > 0:
+    #         self.res_alias = res_alias
+
     # def summarize(self):
     #     pass
 
 
-class FileRAWCollection:
-    auto_summary = False
-    res_hash: str = None
-    res_group: str = None
-    res_alias: str = 'unnamed'
+class FileRAWCollection(ResourceRAW):
+    pass
+    # auto_summary = False
+    # res_hash: str = None
+    # res_group: str = None
+    # res_alias: str = 'unnamed'
     # # pass
 
     # def summarize(self):
@@ -150,6 +174,7 @@ def summarize_(data: FileRAW):
     return PartialSummary(
         'urn:data:' + data.res_group + ':' + data.res_hash + '#' + data.res_alias,
         format_summary_details_hxl(data))
+
 
 @summarize.register
 def summarize_(data: FileRAWCollection):
