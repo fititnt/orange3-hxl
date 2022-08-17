@@ -28,7 +28,7 @@ class HXLDownloadFile(OWWidget):
     want_main_area = False
     resizing_enabled = False
 
-    res_id = Setting("")
+    res_alias = Setting("")
     res_hash = Setting("")
     source_uri_main = Setting("")
     source_uri_alt = Setting("")
@@ -46,7 +46,8 @@ class HXLDownloadFile(OWWidget):
         # if there are two or more outputs, default=True marks the default output
         # data = Output("Data", Table, default=True, auto_summary=False)
         data = Output("FileRAW", FileRAW, default=True, auto_summary=False)
-        fileraw = Output("FileRAW", FileRAW, default=True, auto_summary=False)
+        # fileraw = Output("FileRAW", FileRAW, default=True, auto_summary=False)
+        fileraw = Output("FileRAW", FileRAW, default=True)
 
     # same class can be initiated for Error and Information messages
     class Warning(OWWidget.Warning):
@@ -60,8 +61,8 @@ class HXLDownloadFile(OWWidget):
         self.vault = DataVault()
         self.fileraw = FileRAW()
 
-        self.res_id_box = gui.lineEdit(
-            self.controlArea, self, "res_id", box="Friendly alias (optional)")
+        self.res_alias_box = gui.lineEdit(
+            self.controlArea, self, "res_alias", box="Friendly alias (optional)")
 
         self.main_uri_box = gui.lineEdit(
             self.controlArea, self, "source_uri_main", box="Remote URI of main source", callback=self.commit)
@@ -89,6 +90,14 @@ class HXLDownloadFile(OWWidget):
 
         log.exception('downloadfile init')
 
+        # res_alias = self.res_alias_box.text()
+        res_uri = self.main_uri_box.text()
+        res_hash = str(hash_intentionaly_weak(res_uri))
+
+        if DataVault.resource_summary('rawinput', res_hash) is not None:
+            log.exception('downloadfile init already exist, sending rigth now')
+            self.commit()
+
     # @Inputs.data
     # def set_data(self, data):
     #     """set_data"""
@@ -99,20 +108,22 @@ class HXLDownloadFile(OWWidget):
 
     def commit(self):
         """commit"""
-        _hash_refs_a = self.res_id_box.text()
-        _hash_refs_b = self.main_uri_box.text()
+        # _hash_refs_a = self.res_id_box.text()
+        # _hash_refs_b = self.main_uri_box.text()
+        res_alias = self.res_alias_box.text()
         res_uri = self.main_uri_box.text()
-        if _hash_refs_a:
-            res_hash = str(hash_intentionaly_weak(_hash_refs_a))
-            self.infoa.setText(
-                "_hash_refs_a " + res_hash)
-            self.res_hash_box.setText(res_hash)
-        else:
-            res_hash = str(hash_intentionaly_weak(_hash_refs_b))
-            self.infoa.setText("_hash_refs_b " + res_hash)
-            self.res_hash_box.setText(res_hash)
+        res_hash = str(hash_intentionaly_weak(res_uri))
+        # if _hash_refs_a:
+        #     res_hash = str(hash_intentionaly_weak(_hash_refs_a))
+        #     self.infoa.setText(
+        #         "_hash_refs_a " + res_hash)
+        #     self.res_hash_box.setText(res_hash)
+        # else:
+        #     res_hash = str(hash_intentionaly_weak(_hash_refs_b))
+        #     self.infoa.setText("_hash_refs_b " + res_hash)
+        #     self.res_hash_box.setText(res_hash)
 
-        result = self.vault.download_resource(res_hash, res_uri)
+        result = self.vault.download_resource(res_uri, res_hash, res_alias)
 
         self.infoa.setText('result download_resource ' + str(result))
 

@@ -160,6 +160,26 @@ def bcp47_shortest_name(name: str, name_list: list = None):
     return name
 
 
+def bytes_to_human_readable(size, precision=2):
+    """bytes_to_human_readable
+
+    Author: https://stackoverflow.com/a/32009595/894546
+
+    Args:
+        size (_type_): size in bytes
+        precision (int, optional): the precision. Defaults to 2.
+
+    Returns:
+        str: the result
+    """
+    suffixes = ['B', 'KB', 'MB', 'GB', 'TB']
+    suffixIndex = 0
+    while size > 1024 and suffixIndex < 4:
+        suffixIndex += 1  # increment the index of the suffix
+        size = size/1024.0  # apply the division
+    return "%.*f%s" % (precision, size, suffixes[suffixIndex])
+
+
 def orange_data_names_normalization(
         orange_table: Table, hashtag_add: bool = True) -> Tuple[Table, dict]:
     """orange_data_names_normalization Normalize HXL hashtags from data columns
