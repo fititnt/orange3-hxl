@@ -1,5 +1,6 @@
 # from PySide6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt, QFileInfo
 # from PySide6.QtWidgets import QTreeView, QApplication, QHeaderView
+import time
 from typing import Any, Iterable, List, Dict, Union
 import sys
 import inspect
@@ -33,6 +34,7 @@ from orangecontrib.hxl.base import FileRAW
 from orangecontrib.hxl.widgets.utils import (
     RawFileExporter,
     file_raw_info,
+    function_and_args_textarea,
     pandas_to_table,
     # rawfile_csv_to_pandas,
     # rawfile_json_to_pandas,
@@ -77,6 +79,17 @@ class HXLLoadLocal(OWWidget):
     action_args = Setting("")
     _actions_args_placeholder = "delimiter=','\n#argname='the value'\n#arg2=2"
 
+    # pandas.read_table
+    #     delimiter=','
+    # pandas.read_json
+    #     orient='split'
+    # pandas.read_xml
+    #     xpath='//data/record'
+    #     elems_only=True
+    # https://github.com/pandas-dev/pandas/issues/45442
+    _feedback_stack = []
+    _feedback_stack_limit = 15
+
     class Inputs:
         """Inputs"""
         # specify the name of the input and the type
@@ -118,7 +131,6 @@ class HXLLoadLocal(OWWidget):
         self.setMaximumWidth(1200)
         self.setMaximumHeight(1000)
 
-
         self.action_box = gui.widgetBox(
             self.controlArea, "Actions")
 
@@ -140,7 +152,8 @@ class HXLLoadLocal(OWWidget):
         self.loader_args_control = QPlainTextEdit(self)
         self.loader_args_control.setPlaceholderText(
             self._actions_args_placeholder)
-        # self.loader_args_control.setPlainText()
+        if self.action_args:
+            self.loader_args_control.setPlainText(self.action_args)
         self.action_box.layout().addWidget(self.loader_args_control)
         # self.loader_args_control.
         # # self.label_box = gui.
@@ -148,7 +161,6 @@ class HXLLoadLocal(OWWidget):
         gui.button(self.action_box, self, "Reload", callback=self.commit)
 
         # log.exception('HXLLoadLocal init')
-
 
         #gui.button(self.optionsBox, self, "Reload", callback=self.commit)
         gui.separator(self.controlArea)
@@ -158,7 +170,6 @@ class HXLLoadLocal(OWWidget):
 
         self.infos_box = gui.widgetBox(
             self.controlArea, "Detailed information")
-
 
         self.help_box = gui.widgetBox(self.infos_box, "Help")
         self.help_box.setVisible(True)
@@ -175,12 +186,33 @@ class HXLLoadLocal(OWWidget):
         self.feedback_box = gui.widgetBox(self.infos_box, "Feedback")
         self.feedback_box.setVisible(True)
         self.feedback = QTextEdit(self.feedback_box)
-        self.feedback.setPlainText('No specific feedback')
+        # self.feedback.setPlainText('No specific feedback')
         self.feedback_box.layout().addWidget(self.feedback)
 
         self.optionsBox = gui.widgetBox(self.controlArea, "Options")
         gui.button(self.optionsBox, self, "Orange CSVImport",
                    callback=self.show_orange_csvimport)
+
+    def _set_feedback(
+        self, newdata: Union[list, str],
+        already_formated: bool = False,
+        emoji: str = 'ℹ️'
+    ):
+        timestring = time.strftime("%H:%M:%S")
+        # t = strings.split(',')
+        while len(self._feedback_stack) > self._feedback_stack_limit:
+            self._feedback_stack.pop()
+        if not isinstance(newdata, list):
+            newdata = [newdata]
+
+        if not already_formated:
+            for item in newdata:
+                self._feedback_stack.insert(0, f'{timestring} {emoji} {item}')
+        else:
+            for item in newdata:
+                self._feedback_stack.insert(0, f'{item}')
+
+        self.feedback.setPlainText("\n".join(self._feedback_stack))
 
     @Inputs.fileraw
     def set_fileraw(self, fileraw):
@@ -211,14 +243,21 @@ class HXLLoadLocal(OWWidget):
         #     return str(param)
 
         _action = self.exporter_combo.currentText()
+        _action_args = self.loader_args_control.toPlainText()
         _resource_path = self.fileraw.base()
+        okay, invalid = self.rawexpo.get_compiled_arguments(
+            _action, _action_args)
 
-        data_frame = self.rawexpo.try_run(_action, _resource_path)
+        log.exception('before self.rawexpo.try_run')
+        log.exception([_action, okay, invalid])
+
+        data_frame = self.rawexpo.try_run(_action, _resource_path, args=okay)
         if data_frame is None:
             errors = self.rawexpo.why_failed(formated=True)
             self.data_frame = None
             self.data = None
-            self.feedback.setPlainText(errors)
+            self._set_feedback(errors, True)
+            # self.feedback.setPlainText(errors)
             # self.infoa.setText(errors)
         else:
             self.data_frame = data_frame
@@ -233,8 +272,26 @@ class HXLLoadLocal(OWWidget):
         _action = self.exporter_combo.currentText()
         _action_args = self.loader_args_control.toPlainText()
 
-        log.exception('_action_args')
+        # Force save on the vars
+        self.action_callable = _action
+        self.action_args = _action_args
+
+        log.exception('_action_args text')
         log.exception(_action_args)
+
+        okay, invalid = self.rawexpo.get_compiled_arguments(
+            _action, _action_args)
+
+        if invalid:
+            message = '[{_action}] ignoring not applicable <{str(invalid)}>'
+            if okay:
+                message += f'. De facto applicable: <{str(okay)}>'
+            self._set_feedback(message)
+
+        log.exception('_action_args okay')
+        log.exception(okay)
+        log.exception('_action_args invalid')
+        log.exception(invalid)
 
         help_message = self.rawexpo.user_help(_action)
 

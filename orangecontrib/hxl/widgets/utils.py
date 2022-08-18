@@ -228,8 +228,8 @@ def file_unzip(source: str, target: str):
     log.exception(f'file_unzip [{str(source)}] [{str(target)}]')
 
 
-def function_signature_ast(func: Callable, parsed: bool = False):
-    """function_parameters_ast _summary_
+def function_ast(func: Callable, parsed: bool = False):
+    """function_ast _summary_
 
     _extended_summary_
 
@@ -238,10 +238,6 @@ def function_signature_ast(func: Callable, parsed: bool = False):
 
     Returns:
         _type_: _description_
-
-    #  >>> function_signature(sum)
-    #
-    # >  >> function_signature(pandas.read_fwf)
     """
     sig = inspect.signature(func)
     if not parsed:
@@ -269,10 +265,13 @@ def function_signature_ast(func: Callable, parsed: bool = False):
         return res
 
     fun_sig_ast = {}
+    index = 1
     for key, value in sig.parameters.items():
         fun_sig_ast[key] = {
+            'index': index,
             'types': _get_types_or_default(value, key)
         }
+        index += 1
         _def = _get_types_or_default(value, key, True)
         if _def and _def != '__NO_DEFAULT':
             fun_sig_ast[key]['default'] = _def
@@ -296,16 +295,18 @@ def function_prepare_args(
 
     >>> function_prepare_args(
     ...     pandas.read_fwf, {'colspecs': 'None', 'err': 'or'})
+    ({'colspecs': None}, {'err': 'or'})
 
     >>> function_prepare_args(
     ...     sum, {'colspecs': 'None', 'err': 'or'})
+    (None, {'colspecs': 'None', 'err': 'or'})
 
     """
     okay = {}
     invalid = {}
-    sig = function_signature_ast(func)
-    fun_sig_ast = function_signature_ast(func, True)
-    print(sig)
+    # sig = function_ast(func)
+    fun_sig_ast = function_ast(func, True)
+    # print(sig)
 
     def _try_cast_type(types: list, value: str) -> Any:
         value = value.strip('"').strip('\'')
@@ -347,6 +348,28 @@ def function_prepare_args(
     if len(invalid.keys()) == 0:
         invalid = None
 
+    return okay, invalid
+
+
+def function_and_args_textarea(
+        func: Callable,
+        text_arguments: str,
+        block_repeated: bool = True,
+        *args_ordered) -> Tuple[dict, dict]:
+
+    lines_with_comments = text_arguments.splitlines()
+    named_arguments = {}
+    for _line in lines_with_comments:
+        if len(_line.strip()) > 0 and not _line.strip().startswith('#') and \
+                _line.find('=') > -1:
+            parts = _line.strip().split('=')
+            key = parts.pop(0)
+            # Maybe theres = in the values
+            value = '='.join(parts)
+            named_arguments[key] = value
+            # named_arguments
+
+    okay, invalid = function_prepare_args(func, named_arguments)
     return okay, invalid
 
 
@@ -753,6 +776,17 @@ class RawFileExporter:
             self._errors.pop()
         self._errors.insert(0, f'{timestring} ❌ {info}')
 
+    def _get_func_by_alias(self, signature: str):
+        if not signature or signature.count('.') != 1:
+            raise NotImplementedError(signature)
+        lib, fun = signature.split('.')
+        if lib == 'pandas':
+            the_function = getattr(pandas, fun)
+            return the_function
+        else:
+            # return f'@TODO {signature}'
+            raise NotImplementedError(signature)
+
     def user_help(self, signature: str = None):
         _signature = signature if signature else self.signature
         if not _signature:
@@ -770,19 +804,10 @@ class RawFileExporter:
         else:
             return f'@TODO {signature}'
 
-        return inspect.signature(sys.modules[lib])
-
-        if _signature not in dir(__class__):
-            return 'okay...'
-        else:
-            return 'Error, no help found 2' + _signature
-
-        # return str(help(pandas.read_table))
-        return str(pandas.read_table.__doc__)
-        # @example pandas.read_table
-        lib, fun = _signature.split('.')
-        return inspect.signature(sys.modules[lib])
-        # return inspect.signature(sys.modules[lib][fun])
+    def get_compiled_arguments(self, exporter: str, text_arguments: str):
+        func = self._get_func_by_alias(exporter)
+        okay, invalid = function_and_args_textarea(func, text_arguments)
+        return okay, invalid
 
     def get_all_available_options(self) -> list:
         """get_all_available_options Return a list with what could be used
@@ -793,7 +818,7 @@ class RawFileExporter:
         # @TODO check before based on installed libraries
         return RAW_FILE_EXPORTERS.keys()
 
-    def try_run(self, exporter: str, resource: str, **args):
+    def try_run(self, exporter: str, resource: str, args: dict = None):
         _method = exporter.replace('.', '__') if exporter else '_failed'
 
         if _method not in dir(__class__):
@@ -803,7 +828,20 @@ class RawFileExporter:
         try:
             # @TODO maybe allow check if user have more options than need
             # return self[_method](resource, args)
-            return getattr(self, _method)(resource, args)
+            log.exception(
+                f'exporter[{exporter}] resource[{str(resource)}] args[{str(args)}]')
+
+            if args and 'args' in args:
+                args = args['args']
+
+            # args = {}
+            # args['delimiter'] = ','
+            # args['sep'] = ','
+
+            if args:
+                return getattr(self, _method)(resource, **args)
+            else:
+                return getattr(self, _method)(resource)
         # except (ValueError, AttributeError) as ex:
         except Exception as ex:
             # https://stackoverflow.com/questions/4690600/python-exception-message-capturing
@@ -831,47 +869,47 @@ class RawFileExporter:
             #     self._errors, indent=4, sort_keys=True, ensure_ascii=False)
         return self._errors
 
-    def pandas__json_normalize(self, file, *args):
-        return pandas.json_normalize(file)
+    def pandas__json_normalize(self, file, **kwargs):
+        return pandas.json_normalize(file, **kwargs)
 
-    def pandas__read_csv(self, file, *args):
-        return pandas.read_csv(file)
+    def pandas__read_csv(self, file, **kwargs):
+        return pandas.read_csv(file, **kwargs)
 
-    def pandas__read_excel(self, file, *args):
-        return pandas.read_excel(file)
+    def pandas__read_excel(self, file, **kwargs):
+        return pandas.read_excel(file, **kwargs)
 
-    def pandas__read_fwf(self, file, *args):
-        return pandas.read_fwf(file)
+    def pandas__read_fwf(self, file, **kwargs):
+        return pandas.read_fwf(file, **kwargs)
 
-    def pandas__read_feather(self, file, *args):
-        return pandas.read_feather(file)
+    def pandas__read_feather(self, file, **kwargs):
+        return pandas.read_feather(file, **kwargs)
 
-    def pandas__read_html(self, file, *args):
-        return pandas.read_html(file)
+    def pandas__read_html(self, file, **kwargs):
+        return pandas.read_html(file, **kwargs)
 
-    def pandas__read_json(self, file, *args):
-        return pandas.read_json(file)
+    def pandas__read_json(self, file, **kwargs):
+        return pandas.read_json(file, **kwargs)
 
-    def pandas__read_table(self, file, *args):
-        return pandas.read_table(file)
+    def pandas__read_table(self, file, **kwargs):
+        return pandas.read_table(file, **kwargs)
 
     def pandas__read_orc(self, file, *args):
         return pandas.read_orc(file)
 
-    def pandas__read_parquet(self, file, *args):
-        return pandas.read_parquet(file)
+    def pandas__read_parquet(self, file, **kwargs):
+        return pandas.read_parquet(file, **kwargs)
 
-    def pandas__read_sas(self, file, *args):
+    def pandas__read_sas(self, file, **kwargs):
         return pandas.read_sas(file)
 
-    def pandas__read_spss(self, file, *args):
-        return pandas.read_spss(file)
+    def pandas__read_spss(self, file, **kwargs):
+        return pandas.read_spss(file, **kwargs)
 
-    def pandas__read_stata(self, file, *args):
+    def pandas__read_stata(self, file, **kwargs):
         return pandas.read_stata(file)
 
-    def pandas__read_xml(self, file, *args):
-        return pandas.read_xml(file)
+    def pandas__read_xml(self, file, **kwargs):
+        return pandas.read_xml(file, **kwargs)
 
 
 # def rawfile_csv_to_pandas(file) -> pandas.DataFrame:
