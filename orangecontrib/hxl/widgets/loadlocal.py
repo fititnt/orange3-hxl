@@ -14,7 +14,7 @@ from Orange.widgets.widget import OWWidget, Input, Output, Msg
 from AnyQt.QtWidgets import \
     QStyle, QComboBox, QMessageBox, QGridLayout, QLabel, \
     QLineEdit, QSizePolicy as Policy, QCompleter
-from AnyQt.QtWidgets import QScrollArea, QWidget, QVBoxLayout, QPushButton, QTextEdit
+from AnyQt.QtWidgets import QScrollArea, QWidget, QVBoxLayout, QPushButton, QTextEdit, QPlainTextEdit
 from AnyQt.QtCore import (
     Qt, QFileInfo, QTimer, QSettings, QObject, QSize, QMimeDatabase, QMimeType
 )
@@ -71,7 +71,11 @@ class HXLLoadLocal(OWWidget):
 
     openclass = True
 
-    label = Setting("")
+    # label = Setting("")
+    action_callable = Setting("")
+    # action_args = Setting("", "#argname='Value'\n#arg2=2579")
+    action_args = Setting("")
+    _actions_args_placeholder = "delimiter=','\n#argname='the value'\n#arg2=2"
 
     class Inputs:
         """Inputs"""
@@ -131,8 +135,16 @@ class HXLLoadLocal(OWWidget):
         for item in self.rawexpo.get_all_available_options():
             self.exporter_combo.addItem(item)
         self.exporter_combo.activated[int].connect(self.gui_update_infos)
-
         self.action_box.layout().addWidget(self.exporter_combo)
+
+        self.loader_args_control = QPlainTextEdit(self)
+        self.loader_args_control.setPlaceholderText(
+            self._actions_args_placeholder)
+        # self.loader_args_control.setPlainText()
+        self.action_box.layout().addWidget(self.loader_args_control)
+        # self.loader_args_control.
+        # # self.label_box = gui.
+
         gui.button(self.action_box, self, "Reload", callback=self.commit)
 
         # log.exception('HXLLoadLocal init')
@@ -190,6 +202,9 @@ class HXLLoadLocal(OWWidget):
 
         log.exception('HXLLoadLocal init')
 
+        # Just in case, lets update the infos before
+        self.gui_update_infos()
+
         # return None
 
         # def _vars(param):
@@ -216,14 +231,16 @@ class HXLLoadLocal(OWWidget):
 
         log.exception('gui_update_infos updated')
         _action = self.exporter_combo.currentText()
+        _action_args = self.loader_args_control.toPlainText()
+
+        log.exception('_action_args')
+        log.exception(_action_args)
 
         help_message = self.rawexpo.user_help(_action)
 
         # self.rawexpo.signature = _action
         # help_message = self.rawexpo.options_of(_action)
         # help_message = RawFileExporter(_action)
-
-
         self.help.setPlainText(str(help_message))
         # self.help.setPlainText(str('teste eee'))
         # log.exception(help_message)
@@ -233,10 +250,10 @@ class HXLLoadLocal(OWWidget):
 
         # pass
 
-    def send_report(self):
-        """send_report"""
-        # self.report_plot() includes visualizations in the report
-        self.report_caption(self.label)
+    # def send_report(self):
+    #     """send_report"""
+    #     # self.report_plot() includes visualizations in the report
+    #     self.report_caption(self.label)
 
     def show_orange_csvimport(self):
         path = self.fileraw.base()

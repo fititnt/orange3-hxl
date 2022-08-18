@@ -34,7 +34,7 @@ import logging
 import sys
 import time
 
-from typing import Any, Tuple, Union
+from typing import Any, Callable, Tuple, Union
 
 import zlib
 from zipfile import ZipFile
@@ -226,6 +226,128 @@ def file_unzip(source: str, target: str):
         zipObj.extractall(target)
 
     log.exception(f'file_unzip [{str(source)}] [{str(target)}]')
+
+
+def function_signature_ast(func: Callable, parsed: bool = False):
+    """function_parameters_ast _summary_
+
+    _extended_summary_
+
+    Args:
+        func (Callable): _description_
+
+    Returns:
+        _type_: _description_
+
+    #  >>> function_signature(sum)
+    #
+    # >  >> function_signature(pandas.read_fwf)
+    """
+    sig = inspect.signature(func)
+    if not parsed:
+        return sig
+
+    def _get_types_or_default(
+            param: str, name: str, get_default=False) -> list:
+        # colspecs: 'list[tuple[int, int]] | str | None' = 'infer'
+        res = str(param).replace(name + ': ', '')
+        # 'list[tuple[int, int]] | str | None' = 'infer'
+        if res.find(' = ') > -1:
+            if get_default:
+                return res.split(' = ')[1]
+            res = res.split(' = ')[0]
+            # 'list[tuple[int, int]] | str | None'
+        elif get_default:
+            return '__NO_DEFAULT'
+        res = res.strip('\'')
+        # list[tuple[int, int]] | str | None
+        if res.find(' | ') > -1:
+            res = res.split(' | ')
+        else:
+            res = [res]
+        # ['list[tuple[int, int]]', 'str', 'None']
+        return res
+
+    fun_sig_ast = {}
+    for key, value in sig.parameters.items():
+        fun_sig_ast[key] = {
+            'types': _get_types_or_default(value, key)
+        }
+        _def = _get_types_or_default(value, key, True)
+        if _def and _def != '__NO_DEFAULT':
+            fun_sig_ast[key]['default'] = _def
+
+    return fun_sig_ast
+
+
+def function_prepare_args(
+    func: Callable, named_arguments: dict
+) -> Tuple[dict, dict]:
+    """function_prepare_args _summary_
+
+    _extended_summary_
+
+    Args:
+        func (Callable): Function which will apply the command
+        named_arguments (dict): arguments to prepare
+
+    Returns:
+        Tuple(dict, dict): Okay arguments, Failed arguments
+
+    >>> function_prepare_args(
+    ...     pandas.read_fwf, {'colspecs': 'None', 'err': 'or'})
+
+    >>> function_prepare_args(
+    ...     sum, {'colspecs': 'None', 'err': 'or'})
+
+    """
+    okay = {}
+    invalid = {}
+    sig = function_signature_ast(func)
+    fun_sig_ast = function_signature_ast(func, True)
+    print(sig)
+
+    def _try_cast_type(types: list, value: str) -> Any:
+        value = value.strip('"').strip('\'')
+        if value == 'None':
+            return None
+        if 'bool' in types:
+            if value == 'False':
+                return False
+            if value == 'True':
+                return True
+        if value.isnumeric():
+            if 'int' in types and 'float' not in types:
+                return int(value)
+            if 'int' in types and 'float' in types:
+                if value.find('.') > -1:
+                    return float(value)
+                else:
+                    return int(value)
+            if value.find('.') > -1 or \
+                    ('int' not in types and 'float' in types):
+                return float(value)
+            else:
+                return int(value)
+        # @TODO implement some typehint for lists, typed lists, etc
+        return value
+
+    # print(fun_sig_ast)
+    # return fun_sig_ast
+    for key, value in named_arguments.items():
+        if key in fun_sig_ast:
+            # print(sig.parameters[key])
+            # print(_get_types(sig.parameters[key], key))
+            value_cast = _try_cast_type(fun_sig_ast[key]['types'], value)
+            okay[key] = value_cast
+        else:
+            invalid[key] = value
+    if len(okay.keys()) == 0:
+        okay = None
+    if len(invalid.keys()) == 0:
+        invalid = None
+
+    return okay, invalid
 
 
 def orange_data_names_normalization(
