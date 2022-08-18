@@ -39,14 +39,14 @@ from orangecontrib.hxl.widgets.utils import (
 )
 log = logging.getLogger(__name__)
 
-LOCALLOAD_READERS = {
-    '': None,
-    'pandas.read_table': RawFileExporter.read_table,
-    'pandas.read_csv': RawFileExporter.read_csv,
-    'pandas.read_json': RawFileExporter.read_json,
-    'pandas.json_normalize': RawFileExporter.json_normalize,
-    'pandas.read_xml': RawFileExporter.read_xml,
-}
+# LOCALLOAD_READERS = {
+#     '': None,
+#     'pandas.read_table': RawFileExporter.read_table,
+#     'pandas.read_csv': RawFileExporter.read_csv,
+#     'pandas.read_json': RawFileExporter.read_json,
+#     'pandas.json_normalize': RawFileExporter.json_normalize,
+#     'pandas.read_xml': RawFileExporter.read_xml,
+# }
 
 
 class HXLLoadLocal(OWWidget):
@@ -105,28 +105,44 @@ class HXLLoadLocal(OWWidget):
         super().__init__()
         self.fileraw = None
         self.data = None
+        # return None
+        self.rawexpo = RawFileExporter()
 
-        self.setMinimumWidth(500)
+        self.setMinimumWidth(600)
         self.setMinimumHeight(600)
         self.setMaximumWidth(1200)
         self.setMaximumHeight(1000)
 
+
+        self.action_box = gui.widgetBox(
+            self.controlArea, "Actions")
+
         self.exporter_combo = QComboBox(self)
         self.exporter_combo.setSizePolicy(Policy.Expanding, Policy.Fixed)
-        self.exporter_combo.setMinimumSize(QSize(300, 1))
-        for item in LOCALLOAD_READERS.keys():
+        # self.exporter_combo.setMinimumSize(QSize(300, 16))
+        # for item in LOCALLOAD_READERS.keys():
+
+        _options = self.rawexpo.get_all_available_options()
+
+        log.exception(_options)
+
+        # return None
+        for item in self.rawexpo.get_all_available_options():
             self.exporter_combo.addItem(item)
         self.exporter_combo.activated[int].connect(self.gui_update_infos)
+
+        self.action_box.layout().addWidget(self.exporter_combo)
+        gui.button(self.action_box, self, "Reload", callback=self.commit)
 
         log.exception('HXLLoadLocal init')
 
         self.optionsBox = gui.widgetBox(self.controlArea, "Options")
 
-        gui.button(self.optionsBox, self, "Reload", callback=self.commit)
+        #gui.button(self.optionsBox, self, "Reload", callback=self.commit)
         gui.separator(self.controlArea)
 
-        box = gui.widgetBox(self.controlArea, "Info")
-        self.infoa = gui.widgetLabel(box, "No comments")
+        # box = gui.widgetBox(self.controlArea, "Info")
+        # self.infoa = gui.widgetLabel(box, "No comments")
 
         self.infos_box = gui.widgetBox(
             self.controlArea, "Detailed information")
@@ -162,39 +178,43 @@ class HXLLoadLocal(OWWidget):
 
         log.exception('HXLLoadLocal init')
 
-        def _vars(param):
-            return str(param)
+        # return None
+
+        # def _vars(param):
+        #     return str(param)
 
         _action = self.exporter_combo.currentText()
+        _resource_path = self.fileraw.base()
 
-        if LOCALLOAD_READERS[_action] is not None:
-            # self.data_frame = file_csv_to_pandas(self.fileraw.base())
-            self.data_frame = LOCALLOAD_READERS[_action](self.fileraw.base())
-            if self.data_frame is not None:
-                self.data = pandas_to_table(self.data_frame)
-            else:
-                self.data = None
+        data_frame = self.rawexpo.try_run(_action, _resource_path)
+        if data_frame is None:
+            errors = self.rawexpo.why_failed(formated=True)
+            self.data_frame = None
+            self.data = None
+            self.feedback.setPlainText(errors)
+            # self.infoa.setText(errors)
         else:
-            # Empty
-            self.data_frame = pd.DataFrame()
-
-        _info = [
-            self.fileraw,
-            _action,
-            self.data_frame.head() if self.data else None,
-        ]
-
-        rexpo = RawFileExporter(_action)
-        log.exception(rexpo.options_of())
-
-        self.infoa.setText(json.dumps(
-            _info, indent=4, sort_keys=True, ensure_ascii=False,
-            default=_vars))
+            self.data_frame = data_frame
+            self.data = pandas_to_table(self.data_frame)
 
         self.Outputs.data_frame.send(self.data_frame)
         self.Outputs.data.send(self.data)
 
     def gui_update_infos(self):
+        _action = self.exporter_combo.currentText()
+
+        # self.rawexpo.signature = _action
+        # help_message = self.rawexpo.options_of(_action)
+        # help_message = RawFileExporter(_action)
+
+
+        # self.help.setPlainText(str(help_message))
+        # self.help.setPlainText(str('teste eee'))
+        # log.exception(help_message)
+
+        # if LOCALLOAD_READERS[_action] is not None:
+        #     pass
+
         pass
 
     def send_report(self):

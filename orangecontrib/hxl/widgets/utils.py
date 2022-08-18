@@ -28,8 +28,10 @@
 #    python3 -m doctest orangecontrib/hxl/widgets/utils.py
 
 import inspect
+import json
 import logging
 import sys
+import time
 
 from typing import Any, Tuple, Union
 
@@ -562,13 +564,35 @@ def qhxl_match(
     return False
 
 
+RAW_FILE_EXPORTERS = {
+    # '': None,
+    'pandas.read_table': pandas.read_table,
+    'pandas.read_csv': pandas.read_csv,
+    'pandas.read_json': pandas.read_json,
+    'pandas.json_normalize': pandas.json_normalize,
+    'pandas.read_xml': pandas.read_xml,
+}
+
+RAW_FILE_EXPORTERS_UI = RAW_FILE_EXPORTERS.keys()
+
+
 class RawFileExporter:
 
     signature: str = None
 
+    _errors: list = []
+    _errors_max = 5
+
     def __init__(self, signature: str = None) -> None:
         if signature:
             self.signature = signature
+
+    def _set_error(self, info: str):
+        timestring = time.strftime("%H:%M:%S")
+        # t = strings.split(',')
+        if len(self._errors) > self._errors_max:
+            self._errors.pop()
+        self._errors.insert(0, f'{timestring} ❌ {info}')
 
     def options_of(self, signature: str = None):
         _signature = signature if signature else self.signature
@@ -581,39 +605,72 @@ class RawFileExporter:
         return inspect.signature(sys.modules[lib])
         # return inspect.signature(sys.modules[lib][fun])
 
-    @staticmethod
-    def json_normalize(file, **args):
-        # return pandas.json_normalize(file)
+    def get_all_available_options(self) -> list:
+        """get_all_available_options Return a list with what could be used
+
+        Returns:
+            list: the result
+        """
+        # @TODO check before based on installed libraries
+        return RAW_FILE_EXPORTERS.keys()
+
+    def try_run(self, exporter: str, resource: str, **args):
+        _method = exporter.replace('.', '__') if exporter else '_failed'
+
+        if _method not in dir(__class__):
+            ex_type, ex_value, ex_traceback = sys.exc_info()
+            self._set_error(f'Unknown exporter {str(exporter)}')
+            return None
         try:
-            return pandas.json_normalize(file)
-        except (ValueError, AttributeError):
+            # @TODO maybe allow check if user have more options than need
+            # return self[_method](resource, args)
+            return getattr(self, _method)(resource, args)
+        # except (ValueError, AttributeError) as ex:
+        except Exception as ex:
+            # https://stackoverflow.com/questions/4690600/python-exception-message-capturing
+            # Get current system exception
+            ex_type, ex_value, _ex_traceback = sys.exc_info()
+            # self._set_error(f'[{exporter}] [{_method}] [{str(ex_type)}] {str(ex_value)}')
+            self._set_error(f'[{exporter}] [{str(ex_type)}] {str(ex_value)}')
+            log.exception(f'[{exporter}] [{str(ex_type)}] {str(ex_value)}')
+            # self._set_error(f'self[{_method}]({resource}, {args})')
             return None
 
-    @staticmethod
-    def read_csv(file, **args):
+    def why_failed(self, formated: bool = True):
+        if formated:
+            # if len(self._errors) == 0:
+            #     return 'No errors'
+            result = ''
+            for line in self._errors:
+                result += str(line) + "\n"
+                # result += str(line)
+
+            # return "\n".join(self._errors)
+            return result
+
+            # return json.dumps(
+            #     self._errors, indent=4, sort_keys=True, ensure_ascii=False)
+        return self._errors
+
+    # @staticmethod
+    def pandas__json_normalize(self, file, *args):
+        return pandas.json_normalize(file)
+
+    # @staticmethod
+    def pandas__read_csv(self, file, *args):
         return pandas.read_csv(file)
 
-    @staticmethod
-    def read_json(file, **args):
-        try:
-            return pandas.read_json(file)
-        except (ValueError, AttributeError):
-            return None
+    # @staticmethod
+    def pandas__read_json(self, file, *args):
+        return pandas.read_json(file)
 
-    @staticmethod
-    def read_table(file, **args):
-        try:
-            return pandas.read_table(file)
-        except (ValueError, AttributeError):
-            return None
+    # @staticmethod
+    def pandas__read_table(self, file, *args):
+        return pandas.read_table(file)
 
-    @staticmethod
-    def read_xml(file, **args):
-        try:
-            return pandas.read_xml(file)
-        # except (ValueError, AttributeError, lxml.etree.XMLSyntaxError):
-        except:
-            return None
+    # @staticmethod
+    def pandas__read_xml(self, file, *args):
+        return pandas.read_xml(file)
 
 
 # def rawfile_csv_to_pandas(file) -> pandas.DataFrame:
