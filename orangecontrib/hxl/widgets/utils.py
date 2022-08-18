@@ -27,7 +27,9 @@
 # pytest
 #    python3 -m doctest orangecontrib/hxl/widgets/utils.py
 
+import inspect
 import logging
+import sys
 
 from typing import Any, Tuple, Union
 
@@ -561,6 +563,23 @@ def qhxl_match(
 
 
 class RawFileExporter:
+
+    signature: str = None
+
+    def __init__(self, signature: str = None) -> None:
+        if signature:
+            self.signature = signature
+
+    def options_of(self, signature: str = None):
+        _signature = signature if signature else self.signature
+        if not _signature:
+            return None
+
+        return help(pandas.read_table)
+        # @example pandas.read_table
+        lib, fun = _signature.split('.')
+        return inspect.signature(sys.modules[lib])
+        # return inspect.signature(sys.modules[lib][fun])
 
     @staticmethod
     def json_normalize(file, **args):

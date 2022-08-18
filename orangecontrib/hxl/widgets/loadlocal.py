@@ -1,3 +1,7 @@
+# from PySide6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt, QFileInfo
+# from PySide6.QtWidgets import QTreeView, QApplication, QHeaderView
+from typing import Any, Iterable, List, Dict, Union
+import sys
 import inspect
 import json
 import logging
@@ -10,6 +14,7 @@ from Orange.widgets.widget import OWWidget, Input, Output, Msg
 from AnyQt.QtWidgets import \
     QStyle, QComboBox, QMessageBox, QGridLayout, QLabel, \
     QLineEdit, QSizePolicy as Policy, QCompleter
+from AnyQt.QtWidgets import QScrollArea, QWidget, QVBoxLayout, QPushButton, QTextEdit
 from AnyQt.QtCore import (
     Qt, QFileInfo, QTimer, QSettings, QObject, QSize, QMimeDatabase, QMimeType
 )
@@ -101,26 +106,17 @@ class HXLLoadLocal(OWWidget):
         self.fileraw = None
         self.data = None
 
-        # layout = QGridLayout()
-        # layout.setSpacing(4)
-        # layout.minimumHeightForWidth(300)
-        # layout.SetMinimumSize(QSize(300, 300))
-        # layout.SetMinimumSize = QSize(300, 300)
-        # layout.setMinimumHeight = QSize(300, 300)
-
-        self.setMinimumWidth(300)
-        self.setMinimumHeight(300)
+        self.setMinimumWidth(500)
+        self.setMinimumHeight(600)
         self.setMaximumWidth(1200)
         self.setMaximumHeight(1000)
-        # layout.setMinimumWidth(300)
-        # layout.setMinimumHeight(300)
 
-        self.reader_combo = QComboBox(self)
-        self.reader_combo.setSizePolicy(Policy.Expanding, Policy.Fixed)
-        self.reader_combo.setMinimumSize(QSize(300, 1))
+        self.exporter_combo = QComboBox(self)
+        self.exporter_combo.setSizePolicy(Policy.Expanding, Policy.Fixed)
+        self.exporter_combo.setMinimumSize(QSize(300, 1))
         for item in LOCALLOAD_READERS.keys():
-            self.reader_combo.addItem(item)
-        # self.reader_combo.activated[int].connect(self.select_reader)
+            self.exporter_combo.addItem(item)
+        self.exporter_combo.activated[int].connect(self.gui_update_infos)
 
         log.exception('HXLLoadLocal init')
 
@@ -132,25 +128,23 @@ class HXLLoadLocal(OWWidget):
         box = gui.widgetBox(self.controlArea, "Info")
         self.infoa = gui.widgetLabel(box, "No comments")
 
-        # layout = QGridLayout()
-        # layout.setSpacing(4)
-        # gui.widgetBox(self.controlArea, orientation=layout, box='Source')
-        # vbox = gui.radioButtons(None, self, "source", box=True,
-        #                         callback=None, addToLayout=False)
-        # box = gui.vBox(self.controlArea, "Info")
-        # self.infolabel = gui.widgetLabel(box, 'No data loaded.')
+        self.infos_box = gui.widgetBox(
+            self.controlArea, "Detailed information")
 
-        # box = gui.widgetBox(self.controlArea, "Columns (Double click to edit)")
-        # self.domain_editor = DomainEditor(self)
-        # self.editor_model = self.domain_editor.model()
-        # box.layout().addWidget(self.domain_editor)
-    # @Inputs.data
-    # def set_data(self, data):
-    #     """set_data"""
-    #     if data:
-    #         self.data = data
-    #     else:
-    #         self.data = None
+        self.feedback_box = gui.widgetBox(self.infos_box, "Feedback")
+        self.feedback_box.setVisible(True)
+        self.feedback = QTextEdit(self.feedback_box)
+        self.feedback.setPlainText('No specific feedback')
+        self.feedback_box.layout().addWidget(self.feedback)
+
+        self.help_box = gui.widgetBox(self.infos_box, "Help")
+        self.help_box.setVisible(True)
+        self.help = QTextEdit(self.help_box)
+        self.help.setPlainText('No specific help messages')
+        self.help_box.layout().addWidget(self.help)
+
+        gui.button(self.optionsBox, self, "Orange CSVImport",
+                   callback=self.show_orange_csvimport)
 
     @Inputs.fileraw
     def set_fileraw(self, fileraw):
@@ -171,7 +165,7 @@ class HXLLoadLocal(OWWidget):
         def _vars(param):
             return str(param)
 
-        _action = self.reader_combo.currentText()
+        _action = self.exporter_combo.currentText()
 
         if LOCALLOAD_READERS[_action] is not None:
             # self.data_frame = file_csv_to_pandas(self.fileraw.base())
@@ -190,25 +184,50 @@ class HXLLoadLocal(OWWidget):
             self.data_frame.head() if self.data else None,
         ]
 
+        rexpo = RawFileExporter(_action)
+        log.exception(rexpo.options_of())
+
         self.infoa.setText(json.dumps(
             _info, indent=4, sort_keys=True, ensure_ascii=False,
             default=_vars))
 
-        # import pandas
-        # # _info = inspect(pandas.read_table)
-        # _info = [inspect.signature(pandas.read_table)]
-        # _info.append(inspect.getdoc(pandas.read_table))
-        # self.infoa.setText(json.dumps(
-        #     _info, indent=4, sort_keys=True, ensure_ascii=False,
-        #     default=_vars))
-        # log.exception(_info)
         self.Outputs.data_frame.send(self.data_frame)
         self.Outputs.data.send(self.data)
+
+    def gui_update_infos(self):
+        pass
 
     def send_report(self):
         """send_report"""
         # self.report_plot() includes visualizations in the report
         self.report_caption(self.label)
+
+    def show_orange_csvimport(self):
+        path = self.fileraw.base()
+        from Orange.widgets.data.owcsvimport import CSVImportDialog
+        dlg = CSVImportDialog(
+            self, windowTitle="Import Options", sizeGripEnabled=True)
+        dlg.setPath(path)
+        dlg.show()
+
+    def show_new_window(self, checked):
+        log.exception('show_new_window called')
+        w = AnotherWindow()
+        w.show()
+
+
+class AnotherWindow(QWidget):
+    """
+    This "window" is a QWidget. If it has no parent, it
+    will appear as a free-floating window as we want.
+    """
+
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout()
+        self.label = QLabel("Another Window")
+        layout.addWidget(self.label)
+        self.setLayout(layout)
 
 
 if __name__ == "__main__":
