@@ -32,6 +32,7 @@ import pandas as pd
 from orangecontrib.hxl.base import FileRAW
 from orangecontrib.hxl.widgets.utils import (
     RawFileExporter,
+    file_raw_info,
     pandas_to_table,
     # rawfile_csv_to_pandas,
     # rawfile_json_to_pandas,
@@ -134,9 +135,8 @@ class HXLLoadLocal(OWWidget):
         self.action_box.layout().addWidget(self.exporter_combo)
         gui.button(self.action_box, self, "Reload", callback=self.commit)
 
-        log.exception('HXLLoadLocal init')
+        # log.exception('HXLLoadLocal init')
 
-        self.optionsBox = gui.widgetBox(self.controlArea, "Options")
 
         #gui.button(self.optionsBox, self, "Reload", callback=self.commit)
         gui.separator(self.controlArea)
@@ -147,11 +147,6 @@ class HXLLoadLocal(OWWidget):
         self.infos_box = gui.widgetBox(
             self.controlArea, "Detailed information")
 
-        self.feedback_box = gui.widgetBox(self.infos_box, "Feedback")
-        self.feedback_box.setVisible(True)
-        self.feedback = QTextEdit(self.feedback_box)
-        self.feedback.setPlainText('No specific feedback')
-        self.feedback_box.layout().addWidget(self.feedback)
 
         self.help_box = gui.widgetBox(self.infos_box, "Help")
         self.help_box.setVisible(True)
@@ -159,6 +154,19 @@ class HXLLoadLocal(OWWidget):
         self.help.setPlainText('No specific help messages')
         self.help_box.layout().addWidget(self.help)
 
+        self.peakraw_box = gui.widgetBox(self.infos_box, "Raw input")
+        self.peakraw_box.setVisible(True)
+        self.peakraw = QTextEdit(self.peakraw_box)
+        self.peakraw.setPlainText('No loaded yet')
+        self.peakraw_box.layout().addWidget(self.peakraw)
+
+        self.feedback_box = gui.widgetBox(self.infos_box, "Feedback")
+        self.feedback_box.setVisible(True)
+        self.feedback = QTextEdit(self.feedback_box)
+        self.feedback.setPlainText('No specific feedback')
+        self.feedback_box.layout().addWidget(self.feedback)
+
+        self.optionsBox = gui.widgetBox(self.controlArea, "Options")
         gui.button(self.optionsBox, self, "Orange CSVImport",
                    callback=self.show_orange_csvimport)
 
@@ -168,6 +176,10 @@ class HXLLoadLocal(OWWidget):
         if fileraw:
             self.fileraw = fileraw
             self.commit()
+
+            # @TODO only try again this if input changed
+            inputraw = file_raw_info(self.fileraw.base())
+            self.peakraw.setPlainText(inputraw)
         else:
             self.fileraw = None
 
@@ -201,21 +213,25 @@ class HXLLoadLocal(OWWidget):
         self.Outputs.data.send(self.data)
 
     def gui_update_infos(self):
+
+        log.exception('gui_update_infos updated')
         _action = self.exporter_combo.currentText()
+
+        help_message = self.rawexpo.user_help(_action)
 
         # self.rawexpo.signature = _action
         # help_message = self.rawexpo.options_of(_action)
         # help_message = RawFileExporter(_action)
 
 
-        # self.help.setPlainText(str(help_message))
+        self.help.setPlainText(str(help_message))
         # self.help.setPlainText(str('teste eee'))
         # log.exception(help_message)
 
         # if LOCALLOAD_READERS[_action] is not None:
         #     pass
 
-        pass
+        # pass
 
     def send_report(self):
         """send_report"""

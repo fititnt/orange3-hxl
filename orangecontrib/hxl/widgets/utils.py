@@ -27,6 +27,7 @@
 # pytest
 #    python3 -m doctest orangecontrib/hxl/widgets/utils.py
 
+from genericpath import exists
 import inspect
 import json
 import logging
@@ -188,6 +189,33 @@ def bytes_to_human_readable(size, precision=2):
         suffixIndex += 1  # increment the index of the suffix
         size = size/1024.0  # apply the division
     return "%.*f%s" % (precision, size, suffixes[suffixIndex])
+
+
+def file_raw_info(source: str):
+
+    if not exists(source):
+        return f'File not exists [{source}]'
+
+    information = "====================RAW DATA====================\n"
+    # with open(source, 'rb') as f:
+    #     information = f.read()[:-4]
+
+    maxloop = 1024 * 2
+
+    # with open(source, "rb") as f:
+    # @TODO do differnty if is binary
+    with open(source, "r") as f:
+        byte = f.read(1)
+        information += byte
+        while byte and maxloop > 0:
+            # Do stuff with byte.
+            # byte = f.read(1)
+            information += f.read(1)
+            maxloop -= 1
+
+    information += "\n====================RAW DATA===================="
+
+    return information
 
 
 def file_unzip(source: str, target: str):
@@ -568,8 +596,17 @@ RAW_FILE_EXPORTERS = {
     # '': None,
     'pandas.read_table': pandas.read_table,
     'pandas.read_csv': pandas.read_csv,
+    'pandas.read_excel': pandas.read_excel,
+    'pandas.read_feather': pandas.read_feather,
+    'pandas.read_fwf': pandas.read_fwf,
+    'pandas.read_html': pandas.read_html,
     'pandas.read_json': pandas.read_json,
     'pandas.json_normalize': pandas.json_normalize,
+    'pandas.read_orc': pandas.read_orc,
+    'pandas.read_parquet': pandas.read_parquet,
+    'pandas.read_sas': pandas.read_sas,
+    'pandas.read_spss': pandas.read_spss,
+    'pandas.read_stata': pandas.read_stata,
     'pandas.read_xml': pandas.read_xml,
 }
 
@@ -594,12 +631,32 @@ class RawFileExporter:
             self._errors.pop()
         self._errors.insert(0, f'{timestring} ❌ {info}')
 
-    def options_of(self, signature: str = None):
+    def user_help(self, signature: str = None):
         _signature = signature if signature else self.signature
         if not _signature:
-            return None
+            return 'Error, no help found'
+        # _signature = _signature.replace('.', '__')
 
-        return help(pandas.read_table)
+        lib, fun = _signature.split('.')
+        if lib == 'pandas':
+            the_function = getattr(pandas, fun)
+            # the_signature = inspect.signature(the_function)
+            _help_text = _signature
+            _help_text += "\n\n" + str(inspect.signature(the_function))
+            _help_text += "\n" + the_function.__doc__
+            return _help_text
+        else:
+            return f'@TODO {signature}'
+
+        return inspect.signature(sys.modules[lib])
+
+        if _signature not in dir(__class__):
+            return 'okay...'
+        else:
+            return 'Error, no help found 2' + _signature
+
+        # return str(help(pandas.read_table))
+        return str(pandas.read_table.__doc__)
         # @example pandas.read_table
         lib, fun = _signature.split('.')
         return inspect.signature(sys.modules[lib])
@@ -652,23 +709,45 @@ class RawFileExporter:
             #     self._errors, indent=4, sort_keys=True, ensure_ascii=False)
         return self._errors
 
-    # @staticmethod
     def pandas__json_normalize(self, file, *args):
         return pandas.json_normalize(file)
 
-    # @staticmethod
     def pandas__read_csv(self, file, *args):
         return pandas.read_csv(file)
 
-    # @staticmethod
+    def pandas__read_excel(self, file, *args):
+        return pandas.read_excel(file)
+
+    def pandas__read_fwf(self, file, *args):
+        return pandas.read_fwf(file)
+
+    def pandas__read_feather(self, file, *args):
+        return pandas.read_feather(file)
+
+    def pandas__read_html(self, file, *args):
+        return pandas.read_html(file)
+
     def pandas__read_json(self, file, *args):
         return pandas.read_json(file)
 
-    # @staticmethod
     def pandas__read_table(self, file, *args):
         return pandas.read_table(file)
 
-    # @staticmethod
+    def pandas__read_orc(self, file, *args):
+        return pandas.read_orc(file)
+
+    def pandas__read_parquet(self, file, *args):
+        return pandas.read_parquet(file)
+
+    def pandas__read_sas(self, file, *args):
+        return pandas.read_sas(file)
+
+    def pandas__read_spss(self, file, *args):
+        return pandas.read_spss(file)
+
+    def pandas__read_stata(self, file, *args):
+        return pandas.read_stata(file)
+
     def pandas__read_xml(self, file, *args):
         return pandas.read_xml(file)
 
