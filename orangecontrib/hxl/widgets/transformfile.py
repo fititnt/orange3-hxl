@@ -1,5 +1,6 @@
 # from PySide6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt, QFileInfo
 # from PySide6.QtWidgets import QTreeView, QApplication, QHeaderView
+import gc
 import time
 from typing import Any, Iterable, List, Dict, Union
 import sys
@@ -35,6 +36,7 @@ from orangecontrib.hxl.widgets.utils import (
     RawFileExporter,
     file_raw_info,
     function_and_args_textarea,
+    memory_usage_of,
     pandas_to_table,
     # rawfile_csv_to_pandas,
     # rawfile_json_to_pandas,
@@ -252,6 +254,10 @@ class HXLTransformFile(OWWidget):
         log.exception('before self.rawexpo.try_run')
         log.exception([_action, okay, invalid])
 
+        gc.set_debug(gc.DEBUG_LEAK)
+        log.exception(f'gc.get_count {str(gc.get_count())}')
+        log.exception(f'gc.get_stats {str(gc.get_stats())}')
+
         data_frame = self.rawexpo.try_run(_action, _resource_path, args=okay)
         if data_frame is None:
             errors = self.rawexpo.why_failed(formated=True)
@@ -263,6 +269,37 @@ class HXLTransformFile(OWWidget):
         else:
             self.data_frame = data_frame
             self.data = pandas_to_table(self.data_frame)
+
+        log.exception(
+            f'Size of self.data_frame {memory_usage_of(self.data_frame)}')
+        log.exception(f'Size of self.data {memory_usage_of(self.data)}')
+        # log.exception(f'gc.DEBUG_STATS {str(gc.DEBUG_STATS)}')
+        # log.exception(f'gc.DEBUG_UNCOLLECTABLE {str(gc.DEBUG_UNCOLLECTABLE)}')
+        log.exception(f'gc.get_count {str(gc.get_count())}')
+        log.exception(f'gc.get_stats {str(gc.get_stats())}')
+
+        # log.exception(
+        #     f'gc.is_finalized self.data_frame before {str(gc.is_finalized(self.data_frame))}')
+        log.exception(
+            f'gc.is_tracked self.data_frame before {str(gc.is_tracked(self.data_frame))}')
+        self.data_frame = None
+        # log.exception(
+        #     f'gc.is_finalized self.data_frame after {str(gc.is_finalized(self.data_frame))}')
+        log.exception(
+            f'gc.is_tracked self.data_frame after {str(gc.is_tracked(self.data_frame))}')
+
+        log.exception(
+            f'Size of self.data_frame {memory_usage_of(self.data_frame)}')
+        log.exception(f'Size of self.data {memory_usage_of(self.data)}')
+        # log.exception(f'gc.DEBUG_STATS {str(gc.DEBUG_STATS)}')
+        # log.exception(f'gc.DEBUG_UNCOLLECTABLE {str(gc.DEBUG_UNCOLLECTABLE)}')
+        log.exception(f'gc.get_count {str(gc.get_count())}')
+        log.exception(f'gc.get_stats {str(gc.get_stats())}')
+
+        # Size of self.data_frame 2615822084
+        # Size of self.data 48
+        # self.data_frame 2.44GB
+        # Size of self.data 48.00B
 
         self.Outputs.data_frame.send(self.data_frame)
         self.Outputs.data.send(self.data)
@@ -343,4 +380,4 @@ class AnotherWindow(QWidget):
 
 if __name__ == "__main__":
     from Orange.widgets.utils.widgetpreview import WidgetPreview  # since Orange 3.20.0
-    WidgetPreview(HXLLoadLocal).run()
+    WidgetPreview(HXLTransformFile).run()

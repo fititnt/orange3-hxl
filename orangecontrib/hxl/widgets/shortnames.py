@@ -68,31 +68,31 @@ class HXLShortNames(OWWidget):
 
         # @TODO make early check if have input data before continue
 
-        log.exception(' >>>> self.data.domain.attributes')
-        log.exception(type(self.data.domain.attributes))
-        log.exception(self.data.domain.attributes)
-        log.exception(' >>>> self.data.domain.class_vars')
-        log.exception(type(self.data.domain.class_vars))
-        log.exception(self.data.domain.class_vars)
-        log.exception(' >>>> self.data.domain.metas')
-        log.exception(type(self.data.domain.metas))
-        log.exception(self.data.domain.metas)
+        # log.exception(' >>>> self.data.domain.attributes')
+        # log.exception(type(self.data.domain.attributes))
+        # log.exception(self.data.domain.attributes)
+        # log.exception(' >>>> self.data.domain.class_vars')
+        # log.exception(type(self.data.domain.class_vars))
+        # log.exception(self.data.domain.class_vars)
+        # log.exception(' >>>> self.data.domain.metas')
+        # log.exception(type(self.data.domain.metas))
+        # log.exception(self.data.domain.metas)
 
         new_attributes = []
         history_new_names = []
         for item in self.data.domain.attributes:
             # item = item.renamed(bcp47_shortest_name(item.name))
             new_name = sortname(item.name, history_new_names)
-            log.exception(new_name)
+            # log.exception(new_name)
             history_new_names.append(new_name)
             item = item.renamed(new_name)
-            log.exception(type(self.data.domain.attributes))
+            # log.exception(type(self.data.domain.attributes))
             new_attributes.append(item)
 
         new_metas = []
         for item in self.data.domain.metas:
             new_name = sortname(item.name, history_new_names)
-            log.exception(new_name)
+            # log.exception(new_name)
             history_new_names.append(new_name)
             item = item.renamed(new_name)
             new_metas.append(item)
@@ -101,7 +101,7 @@ class HXLShortNames(OWWidget):
         for item in self.data.domain.class_vars:
             # item = item.renamed(bcp47_shortest_name(item.name))
             new_name = sortname(item.name, history_new_names)
-            log.exception(new_name)
+            # log.exception(new_name)
             history_new_names.append(new_name)
             item = item.renamed(new_name)
             new_class_vars.append(item)
@@ -114,10 +114,10 @@ class HXLShortNames(OWWidget):
         )
         extended_data = self.data.transform(new_domain)
 
-        log.exception('self.data.domain')
-        log.exception(self.data.domain)
-        log.exception('new_domain')
-        log.exception(new_domain)
+        # log.exception('self.data.domain')
+        # log.exception(self.data.domain)
+        # log.exception('new_domain')
+        # log.exception(new_domain)
         # log.exception('extended_data')
         # log.exception(extended_data)
         # log.exception(type(self.data.domain))

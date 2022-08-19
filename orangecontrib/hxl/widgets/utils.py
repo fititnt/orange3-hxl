@@ -27,6 +27,7 @@
 # pytest
 #    python3 -m doctest orangecontrib/hxl/widgets/utils.py
 
+from abc import ABC
 from genericpath import exists
 import inspect
 import json
@@ -169,6 +170,18 @@ def bcp47_shortest_name(name: str, name_list: list = None):
         attempt += 1
 
     return name
+
+
+def memory_usage_of(reference: Any) -> str:
+    # Imperfect, but better than nothing
+    # @see https://stackoverflow.com/questions/449560/how-do-i-determine-the-size-of-an-object-in-python
+    # @see https://stackoverflow.com/questions/46542283/python-how-to-get-size-of-all-objects-in-current-namespace
+    size_in_bytes = sys.getsizeof(reference)
+    size = bytes_to_human_readable(size_in_bytes)
+
+    # @see https://stackoverflow.com/questions/39100971/how-do-i-release-memory-used-by-a-pandas-dataframe
+    #      Humm... maybe call a different thread could allow OS claimn memory back
+    return size
 
 
 def bytes_to_human_readable(size, precision=2):
@@ -758,10 +771,8 @@ RAW_FILE_EXPORTERS = {
 RAW_FILE_EXPORTERS_UI = RAW_FILE_EXPORTERS.keys()
 
 
-class RawFileExporter:
-
+class RawFileCommonUtils(ABC):
     signature: str = None
-
     _errors: list = []
     _errors_max = 5
 
@@ -803,6 +814,9 @@ class RawFileExporter:
             return _help_text
         else:
             return f'@TODO {signature}'
+
+
+class RawFileExporter(RawFileCommonUtils):
 
     def get_compiled_arguments(self, exporter: str, text_arguments: str):
         func = self._get_func_by_alias(exporter)

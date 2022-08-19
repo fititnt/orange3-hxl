@@ -253,7 +253,7 @@ class FileRAWCollection(ResourceRAW):
         success_pattern = []
         less_restricted = []
         for _item in root_directory.glob(parameters):
-            log.exception(f' testing [{str(_item)})]')
+            # log.exception(f' testing [{str(_item)})]')
             if _item.is_file():
                 selected_path = _item.relative_to(VALT_BASE)
                 filename_now = _item.name
@@ -307,7 +307,7 @@ class FileRAWCollection(ResourceRAW):
         _file_raw.res_hash = self.res_hash
         _file_raw.set_direct(_result)
 
-        log.exception(f' final result [{str(_result)})]')
+        # log.exception(f' final result [{str(_result)})]')
         return _file_raw
         return None
 
