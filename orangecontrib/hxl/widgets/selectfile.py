@@ -1,4 +1,5 @@
 import logging
+import re
 
 from Orange.data import Table
 from Orange.widgets import gui
@@ -61,17 +62,22 @@ class HXLSelectFile(OWWidget):
         self.action_box = gui.widgetBox(
             self.controlArea, "Default Selection")
 
-        self.sel_f_0_ext_box = gui.lineEdit(
-            self.action_box, self, "sel_f_0_ext",
-            box="Extension (use | to multiple)",
+        self.sel_f_0_name_box = gui.lineEdit(
+            self.action_box, self, "sel_f_0_name",
+            box="Exact filename or Python Regex",
             callback=self.commit
         )
 
-        self.sel_f_0_name_box = gui.lineEdit(
-            self.action_box, self, "sel_f_0_name",
-            box="Name (accepts regex)",
+        self.sel_f_0_ext_box = gui.lineEdit(
+            self.action_box, self, "sel_f_0_ext",
+            box="File extension only (Simple | list; Example: tsv|tab|.hxl.csv)",
             callback=self.commit
         )
+
+        # self.loader_args_control.setPlaceholderText(
+        #     'Regex example: ')
+
+        # tsv|tab|\.hxl\.csv
 
         # self.action_box.layout().addWidget(self.label_box)
         gui.button(self.action_box, self, "Reload", callback=self.commit)
@@ -100,14 +106,18 @@ class HXLSelectFile(OWWidget):
             return None
 
         extensions = string_to_list(self.sel_f_0_ext, default = None)
-        filenames = self.sel_f_0_name if self.sel_f_0_name else None
-        if filenames:
-            filenames = [filenames]
-        # if self.sel_f_0_ext:
+        filename_or_pattern = self.sel_f_0_name if self.sel_f_0_name else None
+        # if self.sel_f_0_name:
+        #     filename_pattern = re.compile(self.sel_f_0_name)
+        # else:
+        #     filename_pattern = False
+
+        # log.exception(f' [{extensions}] [{str(filename_or_pattern)})][{type(filename_or_pattern)})]')
+        # return None
 
         fileraw = self.filerawcollection.select(
             extensions=extensions,
-            filenames=filenames,
+            filename_or_pattern=filename_or_pattern,
         )
         # log.exception(f'HXLSelectFile commit [{str(filenames)}]')
         self.Outputs.fileraw.send(fileraw)
