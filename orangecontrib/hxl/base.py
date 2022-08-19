@@ -204,33 +204,41 @@ class FileRAWCollection(ResourceRAW):
             self.res_group, self.res_hash)
 
     # def select(self, extensions: list = None, filename_or_pattern: Union[Pattern, str] = None):
-    def select(self, extensions: list = None, filename_or_pattern: str = None):
+    def select(
+        self,
+        extensions: list = None,
+        subdirectory: list = None,
+        filename_list: list = None,
+        filename_pattern: str = None
+    ):
         parameters: str = '**/*'
         root_directory = Path(self.base())
-        # for _item in root_directory.glob('**/*'):
-        # log.exception(f' select[{extensions}] [{str(filename_or_pattern)})]')
 
+        # @TODO implement subdirectory option
 
-        # if re.search("^API_8_DS2_en_csv_v2_4357272.csv$", "metadata_indicator_api_8_ds2_en_csv_v2_4357272.csv", re.IGNORECASE):
-        if re.search("^API_8_DS2_en_csv_v2_4357272\.csv$", "metadata_indicator_api_8_ds2_en_csv_v2_4357272.csv", re.IGNORECASE):
-            log.exception(f' exact certoww]')
-        else:
-            log.exception(f' exact err]')
-        if re.search("^API", "API_8_DS2_en_csv_v2_4357272.csv", re.IGNORECASE):
-            log.exception(f' foi]')
-        else:
-            log.exception(f' nao foi]')
-        # testss=re.search("^API", "API_8_DS2_en_csv_v2_4357272.csv", re.IGNORECASE)
-        # log.exception(f' ssss[{str(testss)})]')
-        # testss=re.search("^API", "AxPI_8_DS2_en_csv_v2_4357272.csv", re.IGNORECASE)
-        # log.exception(f' sxxsss[{str(testss)})]')
-        # log.exception(f' filename_or_pattern[{str(filename_or_pattern)})]')
-        # testss2=re.search(filename_or_pattern, "API_8_DS2_en_csv_v2_4357272.csv", re.IGNORECASE)
-        # log.exception(f' testss2[{str(testss2)})]')
+        # # for _item in root_directory.glob('**/*'):
+        # # log.exception(f' select[{extensions}] [{str(filename_or_pattern)})]')
 
-        if filename_or_pattern:
-            _pattern = re.compile(filename_or_pattern, re.IGNORECASE)
-            _search_filename = filename_or_pattern.lower()
+        # # if re.search("^API_8_DS2_en_csv_v2_4357272.csv$", "metadata_indicator_api_8_ds2_en_csv_v2_4357272.csv", re.IGNORECASE):
+        # if re.search("^API_8_DS2_en_csv_v2_4357272\.csv$", "metadata_indicator_api_8_ds2_en_csv_v2_4357272.csv", re.IGNORECASE):
+        #     log.exception(f' exact certoww]')
+        # else:
+        #     log.exception(f' exact err]')
+        # if re.search("^API", "API_8_DS2_en_csv_v2_4357272.csv", re.IGNORECASE):
+        #     log.exception(f' foi]')
+        # else:
+        #     log.exception(f' nao foi]')
+        # # testss=re.search("^API", "API_8_DS2_en_csv_v2_4357272.csv", re.IGNORECASE)
+        # # log.exception(f' ssss[{str(testss)})]')
+        # # testss=re.search("^API", "AxPI_8_DS2_en_csv_v2_4357272.csv", re.IGNORECASE)
+        # # log.exception(f' sxxsss[{str(testss)})]')
+        # # log.exception(f' filename_or_pattern[{str(filename_or_pattern)})]')
+        # # testss2=re.search(filename_or_pattern, "API_8_DS2_en_csv_v2_4357272.csv", re.IGNORECASE)
+        # # log.exception(f' testss2[{str(testss2)})]')
+
+        # if filename_or_pattern:
+        #     _pattern = re.compile(filename_or_pattern, re.IGNORECASE)
+        #     _search_filename = filename_or_pattern.lower()
 
         # if filename_or_pattern:
         #     if isinstance(filename_or_pattern, Pattern):
@@ -239,75 +247,68 @@ class FileRAWCollection(ResourceRAW):
         #     else:
         #         _pattern = re.compile(filename_or_pattern, re.IGNORECASE)
         #         _search_filename = filename_or_pattern.lower()
+        # if filename_pattern
 
+        success_exact = []
+        success_pattern = []
+        less_restricted = []
         for _item in root_directory.glob(parameters):
+            log.exception(f' testing [{str(_item)})]')
             if _item.is_file():
-                log.exception(f' ')
-                log.exception(f' ')
-                log.exception(f' ')
-                okay = None
-                tested_filename = _item.name.lower()
-                log.exception(f' inicio test {tested_filename}][{str(tested_filename)}]')
-                if extensions:
-                    for _ext in extensions:
-                        if tested_filename.endswith(_ext.lower()):
-                            okay = True
-                            break
-                    if okay is not True:
-                        log.exception(f' falhou por exensin foi22]')
-                        break
-
-                if filename_or_pattern:
-                    # log.exception(f' testnow[{str(_pattern.search(filenamewithext))})]')
-                    # log.exception(_pattern.search(filenamewithext))
-                    # log.exception(f' testnow[{str(bool(_pattern.search(filenamewithext)))}]')
-                    if _search_filename and tested_filename == _search_filename:
-                        pass
-                    # elif _pattern and not bool(_pattern.search(tested_filename, re.IGNORECASE)):
-                    # elif _pattern and _pattern.search(tested_filename, re.IGNORECASE) is None:
-                    #     break
-                    elif _pattern and not _pattern.search(tested_filename, re.IGNORECASE):
-                            # log.exception(f' nao foi22]')
-                            # log.exception(tested_filename)
-                            # log.exception(_pattern.search(tested_filename, re.IGNORECASE))
-                        break
-                    # elif _pattern:
-                    #     log.exception(f' testando pattern pra {tested_filename}')
-                    #     if not _pattern.search(tested_filename, re.IGNORECASE):
-                    #         log.exception(f' nao foi22]')
-                    #         log.exception(tested_filename)
-                    #         log.exception(_pattern.search(tested_filename, re.IGNORECASE))
-                    #         break
-
-                # if filename_or_pattern:
-                #     # _pat = re.compile('dicator')
-                #     # log.exception(f' match22 [{str(_pat.search(filenamewithext))})]')
-                #     # log.exception(f' match [{str(filename_pattern.search(filenamewithext))})]')
-                #     if not filename_or_pattern.search(filenamewithext, re.IGNORECASE):
-                #         break
-                    # log.exception(f'testing filenames [{str(filenames)}]')
-                    # for _searchname in filenames:
-                    #     _searchname2 = _searchname.replace('*', '').lower()
-                    #     log.exception(f'_searchname2 [{str(_searchname2)}] filenamewithext [{str(filenamewithext)}] [{str(filenamewithext.find(_searchname2))}]')
-                    #     if filenamewithext.find(_searchname2) > -1:
-                    #         okay = True
-                    #         break
-                    # if okay is not True:
-                    #     log.exception(f'not true')
-                    #     continue
-                    # _filenames = filenames.replace('*', '').lower()
-                    # if filenamewithext.find(_filenames) > -1:
-                    #     okay = True
-                    # else:
-                    #     break
-                log.exception(f' DEU FINALIZANDO COM {tested_filename}')
-                # @TODO actually allow select the file via interface
                 selected_path = _item.relative_to(VALT_BASE)
-                _file_raw = FileRAW()
-                _file_raw.res_hash = self.res_hash
-                _file_raw.set_direct(selected_path)
-                return _file_raw
-                # break
+                filename_now = _item.name
+
+                if extensions:
+                    _okay = False
+                    for _ext in extensions:
+                        if filename_now.endswith(_ext):
+                            _okay = True
+                            break
+                    if not _okay:
+                        continue
+
+                if subdirectory:
+                    _okay = False
+                    for _subdir in subdirectory:
+                        if str(selected_path).startswith(_subdir):
+                            _okay = True
+                            break
+                    if not _okay:
+                        continue
+                if filename_list and filename_now in filename_list:
+                    # success_exact.append(_item)
+                    success_exact.append(selected_path)
+                if filename_pattern and \
+                        re.search(filename_pattern,
+                                  filename_now, re.IGNORECASE):
+                    # success_pattern.append(_item)
+                    success_pattern.append(selected_path)
+
+                if not filename_list and not filename_pattern:
+                    # less_restricted.append(_item)
+                    less_restricted.append(selected_path)
+
+        if len(success_exact) > 0:
+            sorted(success_exact)
+            _result = success_exact[0]
+        elif len(success_pattern) > 0:
+            sorted(success_pattern)
+            _result = success_pattern[0]
+        elif len(less_restricted) > 0:
+            sorted(less_restricted)
+            _result = less_restricted[0]
+        else:
+            return None
+
+        # @TODO implement a sorting order of "just get the big file" instead
+        #       name ordering
+
+        _file_raw = FileRAW()
+        _file_raw.res_hash = self.res_hash
+        _file_raw.set_direct(_result)
+
+        log.exception(f' final result [{str(_result)})]')
+        return _file_raw
         return None
 
 

@@ -31,8 +31,10 @@ class HXLSelectFile(OWWidget):
     label = Setting("")
     # we will use numbers, since maybe in the future we migth enable more than one channel
 
-    sel_f_0_name = Setting("")
-    sel_f_0_ext = Setting("")
+    sel_f_0_extl = Setting("")
+    sel_f_0_sdirl = Setting("")
+    sel_f_0_namel = Setting("")
+    sel_f_0_namer = Setting("")
 
     class Inputs:
         """Inputs"""
@@ -60,18 +62,29 @@ class HXLSelectFile(OWWidget):
         self.fileraw = None
 
         self.action_box = gui.widgetBox(
-            self.controlArea, "Default Selection")
+            self.controlArea, "Default Selection for select output")
 
-        self.sel_f_0_name_box = gui.lineEdit(
-            self.action_box, self, "sel_f_0_name",
-            box="Exact filename or Python Regex",
-            callback=self.commit
+        self.sel_f_0_extl_box = gui.lineEdit(
+            self.action_box, self, "sel_f_0_extl",
+            box="File extension (for list: use as separator pipe |)",
+            # callback=self.commit
+        )
+        self.sel_f_0_sdirl_box = gui.lineEdit(
+            self.action_box, self, "sel_f_0_sdirl",
+            box="Subdirectory (for list: use as separator pipe |)",
+            # callback=self.commit
         )
 
-        self.sel_f_0_ext_box = gui.lineEdit(
-            self.action_box, self, "sel_f_0_ext",
-            box="File extension only (Simple | list; Example: tsv|tab|.hxl.csv)",
-            callback=self.commit
+        self.sel_f_0_namel_box = gui.lineEdit(
+            self.action_box, self, "sel_f_0_namel",
+            box="Full file name (for list: use as separator pipe |)",
+            # callback=self.commit
+        )
+
+        self.sel_f_0_name_box = gui.lineEdit(
+            self.action_box, self, "sel_f_0_namer",
+            box="File name Regex (Python flavor, case insensitive)",
+            # callback=self.commit
         )
 
         # self.loader_args_control.setPlaceholderText(
@@ -105,21 +118,18 @@ class HXLSelectFile(OWWidget):
             # log.exception('HXLSelectFile commit not ready yet')
             return None
 
-        extensions = string_to_list(self.sel_f_0_ext, default = None)
-        filename_or_pattern = self.sel_f_0_name if self.sel_f_0_name else None
-        # if self.sel_f_0_name:
-        #     filename_pattern = re.compile(self.sel_f_0_name)
-        # else:
-        #     filename_pattern = False
-
-        # log.exception(f' [{extensions}] [{str(filename_or_pattern)})][{type(filename_or_pattern)})]')
-        # return None
+        extensions = string_to_list(self.sel_f_0_extl, default=None)
+        subdirectory = string_to_list(self.sel_f_0_sdirl, default=None)
+        filename_list = string_to_list(self.sel_f_0_namel, default=None)
+        filename_pattern = self.sel_f_0_namer if self.sel_f_0_namer else None
 
         fileraw = self.filerawcollection.select(
             extensions=extensions,
-            filename_or_pattern=filename_or_pattern,
+            subdirectory=subdirectory,
+            filename_list=filename_list,
+            filename_pattern=filename_pattern,
         )
-        # log.exception(f'HXLSelectFile commit [{str(filenames)}]')
+
         self.Outputs.fileraw.send(fileraw)
 
     def send_report(self):
