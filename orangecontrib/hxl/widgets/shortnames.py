@@ -22,7 +22,7 @@ class HXLShortNames(OWWidget):
     # and not shown in the menu.
     name = "HXL short names"
     description = """
-    Make HXLated input data with shorter variable names.
+    [EARLY DRAFT] Make HXLated input data with shorter variable names.
     """
     icon = "icons/mywidget.svg"
     priority = 9995  # where in the widget order it will appear

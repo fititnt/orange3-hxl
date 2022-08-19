@@ -19,7 +19,7 @@ class HXLDownloadFile(OWWidget):
     name = "Download Raw File"
     id = "orangecontrib.hxl.widgets.downloadfile"
     description = """
-    [DRAFT] Download remote resource into a local FileRAW
+    Download remote resource into a local FileRAW
     """
     icon = "icons/mywidget.svg"
     priority = 50  # where in the widget order it will appear

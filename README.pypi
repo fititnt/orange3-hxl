@@ -1,11 +1,59 @@
-Orange3 Explain
+Orange3-HXLvisualETL
 ===============
 
-Short description for the PyPI.
-See [documentation](http://orange3-imageanalytics.readthedocs.org/).
+This is an early draft of [Orange3](http://orange.biolab.si) add-on with minimal
+awareness of data labeled with [HXL](https://hxlstandard.org/).
 
-Features
---------
-#### List of key features
-* Feature 1
-* Feature 2
+## Features
+
+### Data Vault Conf
+[WORKING DRAFT] Configure active local data vault configurations. This allows overriding defaults.
+
+### Download Raw File
+
+Download remote resource into a local FileRAW
+
+### Unzip Raw File
+[WORKING DRAFT] Unzip (zip, gzip, bzip, ...) an FileRAW into an FileRAWCollection
+
+### Select Raw File
+[DRAFT] From a local FileRAWCollection, select an FileRAW
+
+### Load Raw File
+Convert a local FileRAW into Orange3 Data / DataFrame.
+Required to allow use with other widgets.
+
+Supported features (*):
+
+- `pandas.read_table`
+- `pandas.read_csv`
+- `pandas.read_excel`
+- `pandas.read_feather`
+- `pandas.read_fwf`
+- `pandas.read_html`
+- `pandas.read_json`
+- `pandas.json_normalize`
+- `pandas.read_orc`
+- `pandas.read_parquet`
+- `pandas.read_sas`
+- `pandas.read_spss`
+- `pandas.read_stata`
+- `pandas.read_xml`
+
+_(*) Some features will require additional python packages which are not installed by default with this add-on. The user will be warned about this._
+
+### Statistical Role
+
+Change statistical role (the "feature", "target", "meta", "ignore")
+using HXL patterns instead of stric exact names for the data variables.
+
+### Data Type
+
+[DRAFT] Change the computational data type (the "numeric", "categorical" "text", "datetime") using HXL patterns instead of stric exact names for the data variables.
+
+### HXL short names
+
+[EARLY DRAFT] Make HXLated input data with shorter variable names.
+
+### RAW Info
+[DRAFT] Inspect a FileRAW or FileRAWCollection

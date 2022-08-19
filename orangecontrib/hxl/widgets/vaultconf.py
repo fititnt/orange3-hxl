@@ -17,7 +17,7 @@ class HXLDataVaultConf(OWWidget):
     id = "orangecontrib.hxl.widgets.vaultconf"
     description = """
     [DRAFT] Configure active local data vault configurations.
-    This allow override defaults.
+    This allows overriding defaults.
     """
     icon = "icons/mywidget.svg"
     priority = 10  # where in the widget order it will appear

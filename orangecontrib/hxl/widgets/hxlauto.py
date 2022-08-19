@@ -26,7 +26,7 @@ class HXLAuto(OWWidget):
     # id = "orange.widgets.data.info"
     description = """
     Change statistical role (the "feature", "target", "meta", "ignore")
-    using HXL
+    using HXL patterns instead of stric exact names for the data variables.
     """
     icon = "icons/mywidget.svg"
     priority = 130  # where in the widget order it will appear
