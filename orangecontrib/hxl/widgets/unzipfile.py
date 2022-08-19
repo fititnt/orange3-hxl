@@ -63,7 +63,7 @@ class HXLUnzipFile(OWWidget):
         self.filerawcollection = FileRAWCollection()
         # self.target = None
 
-        log.exception('unzipfile init')
+        # log.exception('unzipfile init')
 
         # self.label_box = gui.lineEdit(
         #     self.controlArea, self, "label", box="Text", callback=self.commit)
@@ -94,7 +94,7 @@ class HXLUnzipFile(OWWidget):
     def set_fileraw(self, fileraw):
         """set_fileraw"""
 
-        log.exception(f'unzipfile set_fileraw [{str(fileraw)}]')
+        # log.exception(f'unzipfile set_fileraw [{str(fileraw)}]')
         if fileraw:
             self.fileraw = fileraw
             self.commit()
@@ -108,7 +108,7 @@ class HXLUnzipFile(OWWidget):
         if not self.fileraw or self.fileraw.ready() is None:
             return None
 
-        log.exception(f'unzipfile commit self.fileraw  [{str(self.fileraw)}]')
+        # log.exception(f'unzipfile commit self.fileraw  [{str(self.fileraw)}]')
         # log.exception(f'unzipfile commit self.data  [{str(self.data)}]')
         # self.infoa.setText(json.dumps([self.data, self.fileraw], default=vars))
         self.infoa.setText(json.dumps([self.fileraw], default=vars))
@@ -116,21 +116,21 @@ class HXLUnzipFile(OWWidget):
         self.filerawcollection.res_hash = self.fileraw.res_hash
 
         if self.filerawcollection.already_ready():
-            log.exception(
-                f'unzipfile commit already_ready [{str(self.filerawcollection)}]')
+            # log.exception(
+            #     f'unzipfile commit already_ready [{str(self.filerawcollection)}]')
             self.Outputs.filerawcollection.send(self.filerawcollection)
             return True
 
         file_unzip(self.fileraw.base(), self.filerawcollection.base())
 
-        log.exception(
-            f'unzipfile commit self.filerawcollection.ready() [{str(self.filerawcollection.ready())}]')
+        # log.exception(
+        #     f'unzipfile commit self.filerawcollection.ready() [{str(self.filerawcollection.ready())}]')
 
         if self.filerawcollection and \
                 self.filerawcollection.ready() is not None:
             # @TODO fix this part
-            log.exception(
-                f'unzipfile commit OKAY [{str(self.filerawcollection)}]')
+            # log.exception(
+            #     f'unzipfile commit OKAY [{str(self.filerawcollection)}]')
             self.Outputs.filerawcollection.send(self.filerawcollection)
         else:
             log.exception(

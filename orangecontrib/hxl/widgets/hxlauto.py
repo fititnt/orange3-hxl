@@ -167,7 +167,7 @@ class HXLAuto(OWWidget):
         # Either not have Point(12.34 56.78) or already processed
         if len(zzwgs84point) == 0 or already_have_latlon:
 
-            log.exception(f'>>> (pre) orange_data_roles_ex_hxl')
+            # log.exception(f'>>> (pre) orange_data_roles_ex_hxl')
             extended_data_3, _changes = orange_data_names_normalization(
                 self.data)
             extended_data_2, _changes2 = orange_data_roles_ex_hxl(
@@ -212,7 +212,7 @@ class HXLAuto(OWWidget):
             new_column_lon
         )
         # self.Outputs.data.send(extended_data)
-        log.exception(f'>>> (pre) orange_data_roles_ex_hxl')
+        # log.exception(f'>>> (pre) orange_data_roles_ex_hxl')
         # extended_data_3, _changes = orange_data_names_normalization(self.data)
         extended_data_3, _changes = orange_data_names_normalization(
             extended_data)

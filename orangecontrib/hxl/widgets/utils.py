@@ -828,8 +828,8 @@ class RawFileExporter:
         try:
             # @TODO maybe allow check if user have more options than need
             # return self[_method](resource, args)
-            log.exception(
-                f'exporter[{exporter}] resource[{str(resource)}] args[{str(args)}]')
+            # log.exception(
+            #     f'exporter[{exporter}] resource[{str(resource)}] args[{str(args)}]')
 
             if args and 'args' in args:
                 args = args['args']

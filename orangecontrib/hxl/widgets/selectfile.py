@@ -6,6 +6,7 @@ from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
 from orangecontrib.hxl.base import FileRAW, FileRAWCollection
+from orangecontrib.hxl.widgets.utils import string_to_list
 
 log = logging.getLogger(__name__)
 
@@ -24,17 +25,21 @@ class HXLSelectFile(OWWidget):
     category = "Orange3-HXLvisualETL"
     keywords = ["widget", "data"]
     want_main_area = False
-    resizing_enabled = False
+    resizing_enabled = True
 
     label = Setting("")
+    # we will use numbers, since maybe in the future we migth enable more than one channel
+
+    sel_f_0_name = Setting("")
+    sel_f_0_ext = Setting("")
 
     class Inputs:
         """Inputs"""
         # specify the name of the input and the type
         # data = Input("Data", Table)
         # data = Input("FileRAWCollection", FileRAWCollection)
-        filerawcollection = Input("FileRAWCollection",
-                                  FileRAWCollection)
+        filerawcollection = Input(
+            "FileRAWCollection", FileRAWCollection)
 
     class Outputs:
         """Outputs"""
@@ -53,10 +58,31 @@ class HXLSelectFile(OWWidget):
         self.filerawcollection = None
         self.fileraw = None
 
-        self.label_box = gui.lineEdit(
-            self.controlArea, self, "label", box="Text", callback=self.commit)
+        self.action_box = gui.widgetBox(
+            self.controlArea, "Default Selection")
 
-        log.exception('HXLSelectFile init')
+        self.sel_f_0_ext_box = gui.lineEdit(
+            self.action_box, self, "sel_f_0_ext",
+            box="Extension (use | to multiple)",
+            callback=self.commit
+        )
+
+        self.sel_f_0_name_box = gui.lineEdit(
+            self.action_box, self, "sel_f_0_name",
+            box="Name (accepts regex)",
+            callback=self.commit
+        )
+
+        # self.action_box.layout().addWidget(self.label_box)
+        gui.button(self.action_box, self, "Reload", callback=self.commit)
+        # log.exception('HXLSelectFile init')
+
+        if self.filerawcollection is not None:
+            # log.exception(
+            #     f'unzipfile init something already ready ... [{str(self.data)}][{str(self.fileraw)}]')
+            log.exception(
+                f'HXLSelectFile init something already ready ... [{str(self.filerawcollection)}]')
+            self.commit()
 
     @Inputs.filerawcollection
     def set_filerawcollection(self, filerawcollection):
@@ -70,11 +96,20 @@ class HXLSelectFile(OWWidget):
     def commit(self):
         """commit"""
         if not self.filerawcollection or not self.filerawcollection.ready():
-            log.exception('HXLSelectFile commit not ready yet')
+            # log.exception('HXLSelectFile commit not ready yet')
             return None
 
-        fileraw = self.filerawcollection.select()
-        log.exception(f'HXLSelectFile commit [{str(fileraw)}]')
+        extensions = string_to_list(self.sel_f_0_ext, default = None)
+        filenames = self.sel_f_0_name if self.sel_f_0_name else None
+        if filenames:
+            filenames = [filenames]
+        # if self.sel_f_0_ext:
+
+        fileraw = self.filerawcollection.select(
+            extensions=extensions,
+            filenames=filenames,
+        )
+        # log.exception(f'HXLSelectFile commit [{str(filenames)}]')
         self.Outputs.fileraw.send(fileraw)
 
     def send_report(self):

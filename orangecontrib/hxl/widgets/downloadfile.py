@@ -89,14 +89,14 @@ class HXLDownloadFile(OWWidget):
             self.controlArea, self, "res_hash", box="Internal ID")
         self.res_hash_box.setDisabled(True)
 
-        log.exception('downloadfile init')
+        # log.exception('downloadfile init')
 
         # res_alias = self.res_alias_box.text()
         res_uri = self.main_uri_box.text()
         res_hash = str(hash_intentionaly_weak(res_uri))
 
         if DataVault.resource_summary('rawinput', res_hash) is not None:
-            log.exception('downloadfile init already exist, sending rigth now')
+            # log.exception('downloadfile init already exist, sending rigth now')
             self.commit()
 
     # @Inputs.data
@@ -134,10 +134,10 @@ class HXLDownloadFile(OWWidget):
         # self.Outputs.data.send(self.fileraw)
         self.Outputs.fileraw.send(self.fileraw)
 
-        log.exception(
-            f'downloadfile commit self.Outputs.fileraw [{str(self.fileraw)}] [{str(self.Outputs.fileraw)}]')
-        log.exception(
-            f'downloadfile commit self.Outputs.data [{str(self.data)}] [{str(self.Outputs.data)}]')
+        # log.exception(
+        #     f'downloadfile commit self.Outputs.fileraw [{str(self.fileraw)}] [{str(self.Outputs.fileraw)}]')
+        # log.exception(
+        #     f'downloadfile commit self.Outputs.data [{str(self.data)}] [{str(self.Outputs.data)}]')
 
     def send_report(self):
         """send_report"""

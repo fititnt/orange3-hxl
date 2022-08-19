@@ -90,8 +90,8 @@ class HXLRAWInfo(OWWidget):
         #     return None
 
         # fileraw = self.filerawcollection.select()
-        log.exception(
-            f'commit @TODO [{str(self.fileraw)}][{str(self.filerawcollection)}]')
+        # log.exception(
+        #     f'commit @TODO [{str(self.fileraw)}][{str(self.filerawcollection)}]')
         # self.Outputs.fileraw.send(fileraw)
 
         raw_info = {

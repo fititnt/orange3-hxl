@@ -1,17 +1,21 @@
 
 from abc import ABC, abstractmethod
+import os
+from pathlib import Path
+from genericpath import exists, isdir, isfile
+
+import requests
+
+import logging
 from orangewidget.utils.signals import summarize, PartialSummary
 from Orange.widgets.utils.state_summary import format_summary_details, \
     format_multiple_summaries
 from AnyQt.QtCore import Qt
 
-
-import os
-from pathlib import Path
-from genericpath import exists, isdir, isfile
-import requests
-
 from orangecontrib.hxl.widgets.utils import bytes_to_human_readable
+
+log = logging.getLogger(__name__)
+
 
 VALT_BASE = f'{Path.home()}/.orange3data'
 ETL_RAW_FILE = 'rawinput'
@@ -196,11 +200,35 @@ class FileRAWCollection(ResourceRAW):
         return DataVault.resource_summary(
             self.res_group, self.res_hash)
 
-    def select(self, parameters: str = '**/*'):
+    def select(self, extensions: list = None, filenames: list = None):
+        parameters: str = '**/*'
         root_directory = Path(self.base())
         # for _item in root_directory.glob('**/*'):
+        log.exception(f' [{extensions}] [{filenames}]')
         for _item in root_directory.glob(parameters):
             if _item.is_file():
+                okay = None
+                filenamewithext = _item.name.lower()
+                if extensions:
+                    for _ext in extensions:
+                        if filenamewithext.lower().endswith(_ext):
+                            okay = True
+                            break
+                    if okay is not True:
+                        break
+                if filenames:
+                    for _searchname in filenames:
+                        _searchname2 = _searchname.replace('*', '').lower()
+                        if filenamewithext.find(_searchname2) > -1:
+                            okay = True
+                    if okay is not True:
+                        break
+                    # _filenames = filenames.replace('*', '').lower()
+                    # if filenamewithext.find(_filenames) > -1:
+                    #     okay = True
+                    # else:
+                    #     break
+
                 # @TODO actually allow select the file via interface
                 selected_path = _item.relative_to(VALT_BASE)
                 _file_raw = FileRAW()
@@ -208,6 +236,7 @@ class FileRAWCollection(ResourceRAW):
                 _file_raw.set_direct(selected_path)
                 return _file_raw
                 # break
+        return None
 
 
 def format_summary_details_hxl(data):

@@ -52,21 +52,21 @@ log = logging.getLogger(__name__)
 # }
 
 
-class HXLLoadLocal(OWWidget):
+class HXLTransformFile(OWWidget):
     # class HXLLoadLocal(OWCSVFileImport):
     # class HXLLoadLocal(_owcsvimport.OWCSVFileImport):
-    """HXLLoadLocal"""
+    """HXLTransformFile"""
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
-    name = "Load Raw File"
-    id = "orangecontrib.widgets.hxl.loadlocal"
+    name = "Transform RAW File"
+    id = "orangecontrib.widgets.hxl.transformfile"
     description = """
-    Load a FileRAW into Orange3 Data / DataFrame
+    [DRAFT] Transform One FileRAW into another FileRAW
     """
     icon = "icons/mywidget.svg"
-    priority = 102  # where in the widget order it will appear
+    priority = 67  # where in the widget order it will appear
     category = "Orange3-HXLvisualETL"
-    keywords = ["widget", "data"]
+    keywords = ["widget", "data", "transform"]
 
     want_main_area = False
     # resizing_enabled = False
@@ -113,6 +113,7 @@ class HXLLoadLocal(OWWidget):
             doc="",
             auto_summary=False
         )
+        fileraw = Input("FileRAW", FileRAW)
 
     # same class can be initiated for Error and Information messages
     class Warning(OWWidget.Warning):
@@ -141,7 +142,7 @@ class HXLLoadLocal(OWWidget):
 
         _options = self.rawexpo.get_all_available_options()
 
-        # log.exception(_options)
+        log.exception(_options)
 
         # return None
         for item in self.rawexpo.get_all_available_options():
@@ -232,7 +233,7 @@ class HXLLoadLocal(OWWidget):
         if not self.fileraw:
             return None
 
-        # log.exception('HXLLoadLocal init')
+        log.exception('HXLLoadLocal init')
 
         # Just in case, lets update the infos before
         self.gui_update_infos()
@@ -248,8 +249,8 @@ class HXLLoadLocal(OWWidget):
         okay, invalid = self.rawexpo.get_compiled_arguments(
             _action, _action_args)
 
-        # log.exception('before self.rawexpo.try_run')
-        # log.exception([_action, okay, invalid])
+        log.exception('before self.rawexpo.try_run')
+        log.exception([_action, okay, invalid])
 
         data_frame = self.rawexpo.try_run(_action, _resource_path, args=okay)
         if data_frame is None:
@@ -268,7 +269,7 @@ class HXLLoadLocal(OWWidget):
 
     def gui_update_infos(self):
 
-        # log.exception('gui_update_infos updated')
+        log.exception('gui_update_infos updated')
         _action = self.exporter_combo.currentText()
         _action_args = self.loader_args_control.toPlainText()
 
@@ -276,8 +277,8 @@ class HXLLoadLocal(OWWidget):
         self.action_callable = _action
         self.action_args = _action_args
 
-        # log.exception('_action_args text')
-        # log.exception(_action_args)
+        log.exception('_action_args text')
+        log.exception(_action_args)
 
         okay, invalid = self.rawexpo.get_compiled_arguments(
             _action, _action_args)
@@ -288,10 +289,10 @@ class HXLLoadLocal(OWWidget):
                 message += f'. De facto applicable: <{str(okay)}>'
             self._set_feedback(message)
 
-        # log.exception('_action_args okay')
-        # log.exception(okay)
-        # log.exception('_action_args invalid')
-        # log.exception(invalid)
+        log.exception('_action_args okay')
+        log.exception(okay)
+        log.exception('_action_args invalid')
+        log.exception(invalid)
 
         help_message = self.rawexpo.user_help(_action)
 
@@ -321,7 +322,7 @@ class HXLLoadLocal(OWWidget):
         dlg.show()
 
     def show_new_window(self, checked):
-        # log.exception('show_new_window called')
+        log.exception('show_new_window called')
         w = AnotherWindow()
         w.show()
 
