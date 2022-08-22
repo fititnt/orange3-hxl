@@ -68,7 +68,8 @@ release = '0.3.0rc1'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+# language = None
+language = "en"
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -193,7 +194,7 @@ html_static_path = ['static']
 # Sphinx supports the following languages:
 #   'da', 'de', 'en', 'es', 'fi', 'fr', 'h', 'it', 'ja'
 #   'nl', 'no', 'pt', 'ro', 'r', 'sv', 'tr'
-#html_search_language = 'en'
+html_search_language = 'en'
 
 # A dictionary with options for the search language support, empty by default.
 # Now only 'ja' uses this config value
@@ -226,8 +227,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'Orange3ExampleAdd-on.tex', 'Orange3 Example Add-on Documentation',
-   'Biolab', 'manual'),
+  (master_doc, 'Orange3-HXLvisualETL.tex', 'Orange3-HXLvisualETL Add-on Documentation',
+   'EticaAI', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -256,7 +257,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'orange3exampleadd-on', 'Orange3 Example Add-on Documentation',
+    (master_doc, 'orange3-hxlvisualetl', 'Orange3-HXLvisualETL Add-on Documentation',
      [author], 1)
 ]
 
@@ -270,8 +271,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'Orange3ExampleAdd-on', 'Orange3 Example Add-on Documentation',
-   author, 'Orange3ExampleAdd-on', 'One line description of project.',
+  (master_doc, 'Orange3-HXLvisualETL', 'Orange3-HXLvisualETL Add-on Documentation',
+   author, 'Orange3-HXLvisualETL', 'One line description of project.',
    'Miscellaneous'),
 ]
 

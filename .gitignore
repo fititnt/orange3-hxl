@@ -22,6 +22,7 @@ __pycache__
 # orange-via-cli.py
 
 # Other
+doc/_build
 .benchmarks
 .pytest_cache
 .tox

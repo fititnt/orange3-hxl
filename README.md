@@ -1,7 +1,16 @@
 # HXL visual ETL (Orange3 add-on)
+[![GitHub](https://img.shields.io/badge/GitHub-fititnt%2Forange3--hxl-lightgrey?logo=github&style=social[fititnt/orange3-hxl] "GitHub")](https://github.com/fititnt/orange3-hxl)
+[![Pypi: Orange3-HXLvisualETL](https://img.shields.io/badge/python%20pypi-Orange3--HXLvisualETL-brightgreen[Python] 
+ "Pypi: Orange3-HXLvisualETL")](https://pypi.org/project/Orange3-HXLvisualETL)
 
 This is an early draft of [Orange3](http://orange.biolab.si) add-on with minimal
 awareness of data labeled with [HXL](https://hxlstandard.org/).
+
+To install this package, use
+
+```bash
+pip install Orange3-HXLvisualETL
+```
 
 ## Features
 
@@ -65,6 +74,12 @@ register it with Orange and add a new workflow with this widget to example tutor
 -->
 
 ## Installation
+
+### From Pypi (recommended)
+
+    pip install Orange3-HXLvisualETL
+
+### From source
 
 To install the add-on from source run
 
