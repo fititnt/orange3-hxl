@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 NAME = "Orange3-HXLvisualETL"
 
-VERSION = "0.3.0rc1"
+VERSION = "0.3.1rc1"
 
 AUTHOR = 'EticaAI'
 AUTHOR_EMAIL = 'rocha@ieee.org'

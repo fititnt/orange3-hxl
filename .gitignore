@@ -26,3 +26,7 @@ doc/_build
 .benchmarks
 .pytest_cache
 .tox
+
+
+# Temp
+orangecontrib/hxl/widgets/OWLearningCurveC.py
