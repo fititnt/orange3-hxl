@@ -20,3 +20,8 @@ __pycache__
 .DS_Store
 
 # orange-via-cli.py
+
+# Other
+.benchmarks
+.pytest_cache
+.tox

@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 NAME = "Orange3-HXLvisualETL"
 
-VERSION = "0.2.0"
+VERSION = "0.3.0rc1"
 
 AUTHOR = 'EticaAI'
 AUTHOR_EMAIL = 'rocha@ieee.org'
@@ -17,7 +17,9 @@ DESCRIPTION = """
 Humanitarian Exchange Language (HXL) visual Extract, Transform, Load (ETL)
 is an add-on for Orange Data Mining.
 """
-LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.pypi'),
+# LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.pypi'),
+#                         'r', encoding='utf-8').read()
+LONG_DESCRIPTION = open(path.join(path.dirname(__file__), 'README.md'),
                         'r', encoding='utf-8').read()
 
 LICENSE = "Unlicence"
