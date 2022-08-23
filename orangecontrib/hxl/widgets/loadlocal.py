@@ -128,8 +128,8 @@ class HXLLoadLocal(OWWidget):
 
         self.setMinimumWidth(600)
         self.setMinimumHeight(600)
-        self.setMaximumWidth(1200)
-        self.setMaximumHeight(1000)
+        # self.setMaximumWidth(1200)
+        # self.setMaximumHeight(1000)
 
         self.action_box = gui.widgetBox(
             self.controlArea, "Actions")
@@ -139,7 +139,7 @@ class HXLLoadLocal(OWWidget):
         # self.exporter_combo.setMinimumSize(QSize(300, 16))
         # for item in LOCALLOAD_READERS.keys():
 
-        _options = self.rawexpo.get_all_available_options()
+        # _options = self.rawexpo.get_all_available_options()
 
         # log.exception(_options)
 

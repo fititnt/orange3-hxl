@@ -8,9 +8,10 @@ from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
-from AnyQt.QtWidgets import QTextEdit, QFileDialog, QDialog
+from AnyQt.QtWidgets import QTextEdit
 
 from orangecontrib.hxl.base import DataVault, FileRAW, FileRAWCollection
+from orangecontrib.hxl.widgets.utils import browse_local_resource
 
 log = logging.getLogger(__name__)
 
@@ -116,20 +117,8 @@ class HXLRAWInfo(OWWidget):
 
     def browse_active(self):
         """browse_active"""
-        _base = None
-        if self._base_active is not None:
-            if Path(self._base_active).is_dir():
-                _base = self._base_active
-            elif Path(self._base_active).is_file():
-                _base = Path(self._base_active).parent
-        if _base:
-            if hasattr(os, 'startfile'):
-                os.startfile(_base)
-            else:
-                import subprocess
-                import sys
-                opener = "open" if sys.platform == "darwin" else "xdg-open"
-                subprocess.call([opener, _base])
+        if self._base_active:
+            browse_local_resource(self._base_active)
         else:
             self.feedback.setPlainText('Invalid base')
 

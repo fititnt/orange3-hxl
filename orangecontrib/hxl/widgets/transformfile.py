@@ -271,31 +271,31 @@ class HXLTransformFile(OWWidget):
             self.data_frame = data_frame
             self.data = pandas_to_table(self.data_frame)
 
-        log.exception(
-            f'Size of self.data_frame {memory_usage_of(self.data_frame)}')
-        log.exception(f'Size of self.data {memory_usage_of(self.data)}')
-        # log.exception(f'gc.DEBUG_STATS {str(gc.DEBUG_STATS)}')
-        # log.exception(f'gc.DEBUG_UNCOLLECTABLE {str(gc.DEBUG_UNCOLLECTABLE)}')
-        log.exception(f'gc.get_count {str(gc.get_count())}')
-        log.exception(f'gc.get_stats {str(gc.get_stats())}')
-
         # log.exception(
-        #     f'gc.is_finalized self.data_frame before {str(gc.is_finalized(self.data_frame))}')
-        log.exception(
-            f'gc.is_tracked self.data_frame before {str(gc.is_tracked(self.data_frame))}')
+        #     f'Size of self.data_frame {memory_usage_of(self.data_frame)}')
+        # log.exception(f'Size of self.data {memory_usage_of(self.data)}')
+        # # log.exception(f'gc.DEBUG_STATS {str(gc.DEBUG_STATS)}')
+        # # log.exception(f'gc.DEBUG_UNCOLLECTABLE {str(gc.DEBUG_UNCOLLECTABLE)}')
+        # log.exception(f'gc.get_count {str(gc.get_count())}')
+        # log.exception(f'gc.get_stats {str(gc.get_stats())}')
+
+        # # log.exception(
+        # #     f'gc.is_finalized self.data_frame before {str(gc.is_finalized(self.data_frame))}')
+        # log.exception(
+        #     f'gc.is_tracked self.data_frame before {str(gc.is_tracked(self.data_frame))}')
         self.data_frame = None
         # log.exception(
         #     f'gc.is_finalized self.data_frame after {str(gc.is_finalized(self.data_frame))}')
-        log.exception(
-            f'gc.is_tracked self.data_frame after {str(gc.is_tracked(self.data_frame))}')
+        # log.exception(
+        #     f'gc.is_tracked self.data_frame after {str(gc.is_tracked(self.data_frame))}')
 
-        log.exception(
-            f'Size of self.data_frame {memory_usage_of(self.data_frame)}')
-        log.exception(f'Size of self.data {memory_usage_of(self.data)}')
-        # log.exception(f'gc.DEBUG_STATS {str(gc.DEBUG_STATS)}')
-        # log.exception(f'gc.DEBUG_UNCOLLECTABLE {str(gc.DEBUG_UNCOLLECTABLE)}')
-        log.exception(f'gc.get_count {str(gc.get_count())}')
-        log.exception(f'gc.get_stats {str(gc.get_stats())}')
+        # log.exception(
+        #     f'Size of self.data_frame {memory_usage_of(self.data_frame)}')
+        # log.exception(f'Size of self.data {memory_usage_of(self.data)}')
+        # # log.exception(f'gc.DEBUG_STATS {str(gc.DEBUG_STATS)}')
+        # # log.exception(f'gc.DEBUG_UNCOLLECTABLE {str(gc.DEBUG_UNCOLLECTABLE)}')
+        # log.exception(f'gc.get_count {str(gc.get_count())}')
+        # log.exception(f'gc.get_stats {str(gc.get_stats())}')
 
         # Size of self.data_frame 2615822084
         # Size of self.data 48

@@ -5,6 +5,7 @@ from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
 from orangecontrib.hxl.base import DataVault
+from orangecontrib.hxl.widgets.utils import browse_local_resource
 
 # from orangecontrib.hxl.base import FileRAW, FileRAWCollection
 
@@ -75,6 +76,11 @@ class HXLDataVaultConf(OWWidget):
                 f'DataVault already initialized at '
                 f'{self.vault.default_data_vault}')
 
+        self._base_active = self.vault.default_data_vault
+        self.browse_button = gui.button(
+            self.controlArea, self, f"Browse {self.vault.default_data_vault}",
+            callback=self.browse_active)
+
     # @Inputs.data
     # def set_data(self, data):
     #     """set_data"""
@@ -83,11 +89,22 @@ class HXLDataVaultConf(OWWidget):
     #     else:
     #         self.data = None
 
+    def browse_active(self):
+        """browse_active"""
+        if self._base_active:
+            browse_local_resource(self._base_active)
+        else:
+            self.feedback.setPlainText('Invalid base')
+
     def commit(self):
         """commit"""
         # self.infoa.setText(json.dumps(self.__dict__))
 
         self.Outputs.data.send(self.data)
+
+    def gui_update_infos(self):
+        """gui_update_infos"""
+        pass
 
     def initilize_data_vault(self):
         """commit"""

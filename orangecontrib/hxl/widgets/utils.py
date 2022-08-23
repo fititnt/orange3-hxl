@@ -235,6 +235,30 @@ def file_raw_info(source: str):
     return information
 
 
+def browse_local_resource(source: str):
+    """browse_local_resource browser the folder of the resource
+
+    Args:
+        source (str): _description_
+    """
+    _base = None
+    if source:
+        if Path(source).is_dir():
+            _base = source
+        elif Path(source.is_file()):
+            _base = Path(source).parent
+    if _base:
+        # Windows
+        if hasattr(os, 'startfile'):
+            os.startfile(_base)
+        else:
+            # Other
+            import subprocess
+            import sys
+            opener = "open" if sys.platform == "darwin" else "xdg-open"
+            subprocess.call([opener, _base])
+
+
 def file_or_path_raw_metadata(source: str) -> dict:
     # @TODO implement check if directory
     result = {

@@ -5,10 +5,15 @@ from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
+from AnyQt.QtWidgets import QTextEdit, QComboBox, QSizePolicy as Policy
+
 from orangecontrib.hxl.base import FileRAW, FileRAWCollection
-from orangecontrib.hxl.widgets.utils import file_unzip
+from orangecontrib.hxl.transform.uncompress import uncompress_options
+from orangecontrib.hxl.widgets.utils import browse_local_resource, file_unzip
 
 log = logging.getLogger(__name__)
+
+# UNZIP_OPTIONS =
 
 
 class HXLUnzipFile(OWWidget):
@@ -61,16 +66,41 @@ class HXLUnzipFile(OWWidget):
         # self.source = None
         self.fileraw = None
         self.filerawcollection = FileRAWCollection()
-        # self.target = None
+        self._base_active = None
+
+        self.action_box = gui.widgetBox(
+            self.controlArea, "Actions")
+
+        self.uncompress_combo = QComboBox(self)
+        self.uncompress_combo.setSizePolicy(Policy.Expanding, Policy.Fixed)
+
+        action_main_options = uncompress_options()
+
+        for item, _value in action_main_options.items():
+            self.uncompress_combo.addItem(item)
+        self.uncompress_combo.activated[int].connect(self.gui_update_infos)
+        self.action_box.layout().addWidget(self.uncompress_combo)
 
         # log.exception('unzipfile init')
 
         # self.label_box = gui.lineEdit(
         #     self.controlArea, self, "label", box="Text", callback=self.commit)
 
-        gui.separator(self.controlArea)
-        box = gui.widgetBox(self.controlArea, "Info")
-        self.infoa = gui.widgetLabel(box, "Waiting reference data")
+        self.infos_box = gui.widgetBox(
+            self.controlArea, "Detailed information")
+        self.browse_button = gui.button(
+            self.infos_box, self, "Browse",
+            callback=self.browse_active)
+
+        self.feedback_box = gui.widgetBox(self.infos_box, "Feedback")
+        self.feedback_box.setVisible(True)
+        self.feedback = QTextEdit(self.feedback_box)
+        # self.feedback.setPlainText('No specific feedback')
+        self.feedback_box.layout().addWidget(self.feedback)
+
+        # gui.separator(self.controlArea)
+        # box = gui.widgetBox(self.controlArea, "Info")
+        # self.infoa = gui.widgetLabel(box, "Waiting reference data")
 
         # if self.data is not None or self.fileraw is not None:
         if self.fileraw is not None:
@@ -101,6 +131,13 @@ class HXLUnzipFile(OWWidget):
         else:
             self.fileraw = None
 
+    def browse_active(self):
+        """browse_active"""
+        if self._base_active:
+            browse_local_resource(self._base_active)
+        else:
+            self.feedback.setPlainText('Invalid base')
+
     def commit(self):
         """commit"""
         # if not self.data and not self.fileraw:
@@ -111,7 +148,7 @@ class HXLUnzipFile(OWWidget):
         # log.exception(f'unzipfile commit self.fileraw  [{str(self.fileraw)}]')
         # log.exception(f'unzipfile commit self.data  [{str(self.data)}]')
         # self.infoa.setText(json.dumps([self.data, self.fileraw], default=vars))
-        self.infoa.setText(json.dumps([self.fileraw], default=vars))
+        # self.infoa.setText(json.dumps([self.fileraw], default=vars))
 
         self.filerawcollection.res_hash = self.fileraw.res_hash
 
@@ -119,12 +156,20 @@ class HXLUnzipFile(OWWidget):
             # log.exception(
             #     f'unzipfile commit already_ready [{str(self.filerawcollection)}]')
             self.Outputs.filerawcollection.send(self.filerawcollection)
+            self._base_active = self.filerawcollection.base()
+            self.browse_button.setText(f'Browse {str(self._base_active)}')
             return True
 
         file_unzip(self.fileraw.base(), self.filerawcollection.base())
 
         # log.exception(
         #     f'unzipfile commit self.filerawcollection.ready() [{str(self.filerawcollection.ready())}]')
+
+        self.feedback.setPlainText(json.dumps(
+            json.dumps([self.fileraw], indent=4, sort_keys=False, ensure_ascii=False, default=vars)))
+
+        self._base_active = self.filerawcollection.base()
+        self.browse_button.setText(f'Browse {str(self._base_active)}')
 
         if self.filerawcollection and \
                 self.filerawcollection.ready() is not None:
@@ -135,6 +180,10 @@ class HXLUnzipFile(OWWidget):
         else:
             log.exception(
                 f'unzipfile commit NOT OKAY [{str(self.filerawcollection)}]')
+
+    def gui_update_infos(self):
+        """gui_update_infos"""
+        pass
 
     def send_report(self):
         """send_report"""
