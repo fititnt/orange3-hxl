@@ -32,6 +32,8 @@ from genericpath import exists
 import inspect
 import json
 import logging
+import os
+from pathlib import Path
 import sys
 import time
 
@@ -231,6 +233,70 @@ def file_raw_info(source: str):
     information += "\n====================RAW DATA===================="
 
     return information
+
+
+def file_or_path_raw_metadata(source: str) -> dict:
+    # @TODO implement check if directory
+    result = {
+        'files': 1,
+        'size': "-1",
+        'path': source,
+        'filetypes': [],
+    }
+    try:
+        import magic
+        has_magic = True
+    except ImportError:
+        has_magic = False
+
+    def _details(file: str):
+        return [
+            magic.from_file(file, mime=True),
+            magic.from_file(file, mime=False),
+        ]
+
+    if os.path.isfile(source):
+        _stat = Path(source).stat()
+        result['size'] = bytes_to_human_readable(_stat.st_size)
+        if has_magic:
+            result['filetypes'].append(_details(source))
+        # return {
+        #     'files': 1,
+        #     'size': bytes_to_human_readable(_stat.st_size),
+        #     'path': source,
+        #     # 'meta': file_or_path_raw_metadata(source)
+        # }
+    elif os.path.isdir(source):
+        root_directory = Path(source)
+        _size = 0
+        _file_count = 0
+        _namedtype = []
+        _mimetypes = []
+        for _item in root_directory.glob('**/*'):
+            if _item.is_file():
+                _file_count += 1
+                _size += _item.stat().st_size
+
+                if has_magic:
+                    _details = _details(source)
+                    if _details[0] in _mimetypes and _details[1] in _namedtype:
+                        continue
+                    _mimetypes.append(_details[0])
+                    _namedtype.append(_details[1])
+                    result['filetypes'].append(_details)
+        result['files'] = _file_count
+        result['files'] = bytes_to_human_readable(_size)
+        # size = sum(f.stat().st_size for f in root_directory.glob('**/*') if f.is_file())
+        # @TODO
+        # return {
+        #     'files': _file_count,
+        #     'size':  bytes_to_human_readable(_size),
+        #     'path': source
+        # }
+    else:
+        return None
+
+    return result
 
 
 def file_unzip(source: str, target: str):

@@ -6,7 +6,7 @@ from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
 
-from orangecontrib.hxl.base import FileRAW, FileRAWCollection
+from orangecontrib.hxl.base import DataVault, FileRAW, FileRAWCollection
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +27,9 @@ class HXLRAWInfo(OWWidget):
     want_main_area = False
     resizing_enabled = False
 
-    label = Setting("")
+    vault: DataVault = None
+
+    # label = Setting("")
 
     class Inputs:
         """Inputs"""
@@ -55,6 +57,17 @@ class HXLRAWInfo(OWWidget):
         super().__init__()
         self.filerawcollection = None
         self.fileraw = None
+        self.vault = DataVault()
+
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(600)
+        self.setMaximumWidth(1200)
+        self.setMaximumHeight(1000)
+
+        self.action_box = gui.widgetBox(
+            self.controlArea, "Actions")
+
+        gui.button(self.action_box, self, "Reload info", callback=self.commit)
 
         # self.label_box = gui.lineEdit(
         #     self.controlArea, self, "label", box="Text", callback=self.commit)
@@ -95,9 +108,17 @@ class HXLRAWInfo(OWWidget):
         # self.Outputs.fileraw.send(fileraw)
 
         raw_info = {
-            'fileraw': self.fileraw,
-            'filerawcollection': self.filerawcollection
+            'fileraw': None,
+            'filerawcollection': None
         }
+        if self.fileraw:
+            raw_info['fileraw'] = self.vault.resource_detail(
+                self.fileraw)
+
+        if self.filerawcollection:
+            raw_info['filerawcollection'] = self.vault.resource_detail(
+                self.filerawcollection
+            )
 
         # self.infoa.setText(json.dumps(raw_info))
         self.infoa.setText(json.dumps(

@@ -6,6 +6,7 @@ from pathlib import Path
 from genericpath import exists, isdir, isfile
 from re import Pattern
 import re
+from typing import Type
 
 import requests
 
@@ -15,7 +16,7 @@ from Orange.widgets.utils.state_summary import format_summary_details, \
     format_multiple_summaries
 from AnyQt.QtCore import Qt
 
-from orangecontrib.hxl.widgets.utils import bytes_to_human_readable
+from orangecontrib.hxl.widgets.utils import bytes_to_human_readable, file_or_path_raw_metadata
 
 log = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ class DataVault:
         return _path + '/' + res_group + '/' + res_hash + '/' + res_hash
 
     @staticmethod
-    def resource_summary(res_group: str, res_hash: str, res_direct: Path = None) -> str:
+    def resource_summary(res_group: str, res_hash: str, res_direct: Path = None) -> dict:
         if res_direct and isinstance(res_direct, Path):
             _fullpath = res_direct
         else:
@@ -113,6 +114,17 @@ class DataVault:
             #     'size': -1,
             #     'path': _fullpath
             # }
+
+    @staticmethod
+    def resource_detail(res: Type['ResourceRAW']) -> dict:
+        if not res:
+            return None
+        if res.res_direct:
+            _fullpath = res.res_direct
+        else:
+            _fullpath = DataVault.resource_path(res.res_group, res.res_hash)
+
+        return file_or_path_raw_metadata(_fullpath)
 
 
 class ResourceRAW(ABC):
