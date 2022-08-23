@@ -10,11 +10,12 @@ from Orange.widgets.utils.save.owsavebase import OWSaveBase
 from Orange.widgets.utils.widgetpreview import WidgetPreview
 
 from orangecontrib.hxl.base import FileRAW
-from orangecontrib.hxl.io import RAWFileReader
+from orangecontrib.hxl.io import RAWFileReader, raw_resource_export
 
 _userhome = os.path.expanduser(f"~{os.sep}")
 
 log = logging.getLogger(__name__)
+
 
 class HXLRAWSave(OWSaveBase):
     name = "Raw Save"
@@ -91,8 +92,10 @@ class HXLRAWSave(OWSaveBase):
             self.fileraw = None
 
     def do_save(self):
-        log.exception('do_save TODO called')
-        log.exception(self.fileraw)
+        log.exception(['do_save TODO called', self.fileraw, self.filename])
+        # log.exception(self.fileraw)
+
+        return raw_resource_export(res=self.fileraw, export_path=self.filename)
         # if self.writer is None:
         #     super().do_save()  # This will do nothing but indicate an error
         #     return
@@ -120,25 +123,29 @@ class HXLRAWSave(OWSaveBase):
              and noyes[self.add_type_annotations])
         ))
 
+    # def do_save(self):
+    #     """
+    #     Do the saving.
 
-    def do_save(self):
-        """
-        Do the saving.
+    #     Default implementation calls the write method of the writer
+    #     corresponding to the current filter. This requires that get_filters()
+    #     returns is a dictionary whose keys are classes.
 
-        Default implementation calls the write method of the writer
-        corresponding to the current filter. This requires that get_filters()
-        returns is a dictionary whose keys are classes.
+    #     Derived classes may simplify this by providing a list of filters and
+    #     override do_save. This is particularly handy if the widget supports only
+    #     a single format.
+    #     """
+    #     # This method is separated out because it will usually be overriden
+    #     if self.writer is None:
+    #         self.Error.unsupported_format(self.filter)
+    #         return
 
-        Derived classes may simplify this by providing a list of filters and
-        override do_save. This is particularly handy if the widget supports only
-        a single format.
-        """
-        # This method is separated out because it will usually be overriden
-        if self.writer is None:
-            self.Error.unsupported_format(self.filter)
-            return
-        self.writer.write(self.filename, self.data)
-    # @classmethod
+    #     log.exception('do_save TODO called')
+    #     log.exception(self.filename)
+    #     log.exception(self.data)
+    #     log.exception(self.fileraw)
+    #     self.writer.write(self.filename, self.data)
+    # # @classmethod
     # def migrate_settings(cls, settings, version=0):
     #     def migrate_to_version_2():
     #         # Set the default; change later if possible
