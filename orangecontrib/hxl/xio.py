@@ -1,7 +1,37 @@
+# ==============================================================================
+#
+#          FILE: xio.py
+#                orangecontrib/hxl/xio.py
+#
+#         USAGE:  It's a python library
+#
+#   DESCRIPTION:  I/O related utils. Renamed from io.py to xio.py to make
+#                 python3 -m doctest happy.
+#
+#       OPTIONS:  ---
+#
+#  REQUIREMENTS:  ---
+#          BUGS:  ---
+#         NOTES:  ---
+#       AUTHORS:  Emerson Rocha <rocha[at]ieee.org>
+# COLLABORATORS:  ---
+#       COMPANY:  EticaAI
+#       LICENSE:  Public Domain dedication or Zero-Clause BSD
+#                 SPDX-License-Identifier: Unlicense OR 0BSD
+#       VERSION:  v1.0.0
+#       CREATED:  2022-08-23 18:47 UTC
+#      REVISION:  ---
+# ==============================================================================
+"""Common library for 999999999_*.py cli scripts
+"""
+# pytest
+#    python3 -m doctest ./orangecontrib/hxl/xio.py
+
 import csv
 import os
 from pathlib import Path
 import shutil
+import requests
 from Orange.data.io import FileFormat
 
 import logging
@@ -84,3 +114,19 @@ def raw_resource_export(res: ResourceRAW, export_path: str):
     else:
         log.exception('raw_resource_export _copy')
         return _copy(source_path, export_path)
+
+
+def http_request_head(uri: str) -> dict:
+    """
+    >>> http_request_head("https://api.worldbank.org/v2/en/topic/8?downloadformat=csv")
+    """
+    result = {
+        'code': None,
+        'headers': None
+    }
+    response = requests.head(uri)
+
+    result['code'] = response.status_code
+    result['headers'] = response.headers
+    # print('tst')
+    return response, result

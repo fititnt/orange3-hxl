@@ -58,3 +58,11 @@ HTTP_STATUS_SOFTFAIL = [
     510,  # 510 Not Extended
     511,  # 511 Network Authentication Required
 ]
+
+# Even for resources marked as public, these codes are unlikely to be
+# misconfiguration or network error. Ideally we should add autehentication
+# fails here too, but at the moment the extension does not support then.
+HTTP_STATUS_ALWAYSFAIL = [
+    410,  # 410 Gone
+    451,  # 451 Unavailable For Legal Reasons
+]

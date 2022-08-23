@@ -17,6 +17,7 @@ from functools import reduce, partial
 from Orange.widgets.utils.concurrent import ConcurrentWidgetMixin, TaskState
 
 from orangecontrib.hxl.base import FileRAW
+from orangecontrib.hxl.widgets.mixin import HXLWidgetFeedbackMixin
 from orangecontrib.hxl.widgets.utils import hash_intentionaly_weak
 
 from orangecontrib.hxl.base import DataVault
@@ -24,7 +25,7 @@ from orangecontrib.hxl.base import DataVault
 log = logging.getLogger(__name__)
 
 
-class HXLDownloadFile(OWWidget):
+class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
     """HXLDownloadFile"""
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
@@ -66,6 +67,13 @@ class HXLDownloadFile(OWWidget):
     class Warning(OWWidget.Warning):
         """Warning"""
         warning = Msg("My warning!")
+        primary_source_fail = Msg("Primary source failed, using backup")
+
+    # class Error(OWWidget.Error):
+    #     file_not_found = Msg("No source and altenatives ")
+    #     missing_reader = Msg("Missing reader.")
+    #     sheet_error = Msg("Error listing available sheets.")
+    #     unknown = Msg("Read error:\n{}")
 
     def __init__(self):
         super().__init__()
@@ -89,17 +97,25 @@ class HXLDownloadFile(OWWidget):
         gui.separator(self.controlArea)
         self.optionsBox = gui.widgetBox(self.controlArea, "Options")
 
-        gui.button(self.optionsBox, self, "(Re)Download", callback=self.commit)
+        gui.button(
+            self.optionsBox, self, "(Re)Download", callback=self.commit_forced)
 
         # self.res_hash_box.setText('teste')
 
         gui.separator(self.controlArea)
-        box = gui.widgetBox(self.controlArea, "Info")
+        self.infos_box = gui.widgetBox(
+            self.controlArea, "Detailed information")
+
+        self.browse_button = gui.button(
+            self.infos_box, self, "Browse",
+            callback=self.browse_active)
+
+        box = gui.widgetBox(self.infos_box, "Info")
         self.infoa = gui.widgetLabel(box, "No comments")
 
         self.res_hash_box = gui.lineEdit(
-            self.controlArea, self, "res_hash", box="Internal ID")
-        self.res_hash_box.setDisabled(True)
+            self.infos_box, self, "res_hash", box="Internal ID")
+        # self.res_hash_box.setDisabled(True)
 
         # log.exception('downloadfile init')
 
@@ -129,7 +145,7 @@ class HXLDownloadFile(OWWidget):
 
     # @gui.deferred
 
-    def commit(self):
+    def commit(self, forced=False, ttl: int = None):
         """commit"""
         # _hash_refs_a = self.res_id_box.text()
         # _hash_refs_b = self.main_uri_box.text()
@@ -146,11 +162,29 @@ class HXLDownloadFile(OWWidget):
         #     self.infoa.setText("_hash_refs_b " + res_hash)
         #     self.res_hash_box.setText(res_hash)
 
-        result = self.vault.download_resource(res_uri, res_hash, res_alias)
+        result = self.vault.download_resource(
+            res_uri, res_hash, res_alias, use_cache=True)
 
-        self.infoa.setText('result download_resource ' + str(result))
+        # if forced:
+        #     result = self.vault.download_resource(
+        #         res_uri, res_hash, res_alias, use_cache=not forced)
+
+        #     self.infoa.setText('result download_resource ' + str(result))
+        # else:
+        #     result = self.vault.download_resource(
+        #         res_uri, res_hash, res_alias, use_cache=not forced)
+        #     self.infoa.setText(
+        #         '(forced) result download_resource ' + str(result))
 
         self.fileraw.set_resource(res_hash, 'rawinput')
+
+        raw_info = self.vault.resource_detail(
+            self.fileraw
+        )
+
+        if raw_info and 'base' in raw_info:
+            self._base_active = raw_info['base']
+            self.browse_button.setText(f'Browse {str(self._base_active)}')
 
         # self.start(
         #     run_v2,
@@ -162,6 +196,11 @@ class HXLDownloadFile(OWWidget):
         # self.Outputs.data.send(self.data)
         # self.Outputs.data.send(self.fileraw)
         self.Outputs.fileraw.send(self.fileraw)
+
+    def commit_forced(self):
+        self.commit(forced=True)
+        self.Warning.primary_source_fail()
+        pass
 
     def send_report(self):
         """send_report"""

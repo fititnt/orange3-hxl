@@ -11,12 +11,14 @@ from Orange.widgets.widget import OWWidget, Input, Output, Msg
 from AnyQt.QtWidgets import QTextEdit
 
 from orangecontrib.hxl.base import DataVault, FileRAW, FileRAWCollection
+from orangecontrib.hxl.widgets.mixin import HXLWidgetFeedbackMixin
 from orangecontrib.hxl.widgets.utils import browse_local_resource
 
 log = logging.getLogger(__name__)
 
 
-class HXLRAWInfo(OWWidget):
+class HXLRAWInfo(OWWidget, HXLWidgetFeedbackMixin):
+# class HXLRAWInfo(OWWidget):
     """HXLRAWInfo"""
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
@@ -115,12 +117,12 @@ class HXLRAWInfo(OWWidget):
         else:
             self.filerawcollection = None
 
-    def browse_active(self):
-        """browse_active"""
-        if self._base_active:
-            browse_local_resource(self._base_active)
-        else:
-            self.feedback.setPlainText('Invalid base')
+    # def browse_active(self):
+    #     """browse_active"""
+    #     if self._base_active:
+    #         browse_local_resource(self._base_active)
+    #     else:
+    #         self.feedback.setPlainText('Invalid base')
 
     def commit(self):
         """commit"""

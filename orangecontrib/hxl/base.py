@@ -15,15 +15,16 @@ from orangewidget.utils.signals import summarize, PartialSummary
 from Orange.widgets.utils.state_summary import format_summary_details, \
     format_multiple_summaries
 from AnyQt.QtCore import Qt
+from orangecontrib.hxl.vars import DATAVAULT_BASE, INFIX_INPUT_RAWFILE, INFIX_INPUT_RAWTRANSFILE, INFIX_INPUT_RAWUNCOMPFILE
 
 from orangecontrib.hxl.widgets.utils import bytes_to_human_readable, file_or_path_raw_metadata
 
 log = logging.getLogger(__name__)
 
 
-VALT_BASE = f'{Path.home()}/.orange3data'
-ETL_RAW_FILE = 'rawinput'
-ETL_RAW_FILES = 'unzipedinput'  # @TODO rename to rawinputs
+# DATAVAULT_BASE = f'{Path.home()}/.orange3data'
+# INFIX_INPUT_RAWFILE = 'rawinput'
+# INFIX_INPUT_RAWUNCOMPFILE = 'unzipedinput'  # @TODO rename to rawinputs
 
 
 # @TODO create some widged only for inspect other raw resources
@@ -31,18 +32,21 @@ ETL_RAW_FILES = 'unzipedinput'  # @TODO rename to rawinputs
 class DataVault:
 
     default_data_vault: str = None
-    entrypoint: str = 'rawinput'
-    unzipedinput: str = ETL_RAW_FILES
-    transformedinput: str = 'transformedinput'
+    # entrypoint: str = 'rawinput'
+    entrypoint: str = INFIX_INPUT_RAWFILE
+    unzipedinput: str = INFIX_INPUT_RAWUNCOMPFILE
+    # transformedinput: str = 'transformedinput'
+    transformedinput: str = INFIX_INPUT_RAWTRANSFILE
 
     def __init__(self):
-        self.default_data_vault = f'{Path.home()}/.orange3data'
+        # self.default_data_vault = f'{Path.home()}/.orange3data'
+        self.default_data_vault = DATAVAULT_BASE
 
     def initialize(self):
         if not exists(self.default_data_vault):
             os.makedirs(self.default_data_vault)
             os.makedirs(self.default_data_vault + '/' + self.entrypoint)
-            os.makedirs(self.default_data_vault + '/' + ETL_RAW_FILES)
+            os.makedirs(self.default_data_vault + '/' + self.unzipedinput)
             os.makedirs(self.default_data_vault + '/' + self.transformedinput)
 
     def is_initialized(self):
@@ -53,7 +57,8 @@ class DataVault:
         source_uri: str,
         res_hash: str,
         res_alias: str = None,
-        force: bool = False
+        use_cache: bool = True,
+        ttl: int = None
     ):
         if not self.is_initialized():
             raise RuntimeError('Not initialized')
@@ -63,8 +68,14 @@ class DataVault:
         if not exists(base):
             os.makedirs(base)
 
-        if exists(fullname) and force is not True:
-            return fullname
+        if exists(fullname):
+            if use_cache is True:
+                return fullname
+            if ttl is not None:
+                # @TODO implement this part
+                pass
+            log.exception('download_resource cache exist, but revalidating...')
+
         r = requests.get(source_uri, allow_redirects=True)
         # @TODO make checks if source is correct, not error, etc
 
@@ -83,7 +94,7 @@ class DataVault:
         if res is not None:
             if isinstance(res, FileRAW):
                 return _path + '/' + res.res_group + '/' + res.res_hash + \
-                '/' + res.res_hash
+                    '/' + res.res_hash
             if isinstance(res, FileRAWCollection):
                 return _path + '/' + res.res_group + '/' + res.res_hash
 
@@ -182,14 +193,14 @@ class ResourceRAW(ABC):
 
 
 class FileRAW(ResourceRAW):
-    res_group = ETL_RAW_FILE
+    res_group = INFIX_INPUT_RAWFILE
 
     def base(self) -> str:
-        # return VALT_BASE + '/rawinput/' + self.res_hash + self.res_hash
+        # return DATAVAULT_BASE + '/rawinput/' + self.res_hash + self.res_hash
         if self.res_direct:
-            return f'{VALT_BASE}/{str(self.res_direct)}'
+            return f'{DATAVAULT_BASE}/{str(self.res_direct)}'
         else:
-            return f'{VALT_BASE}/rawinput/{self.res_hash}/{self.res_hash}'
+            return f'{DATAVAULT_BASE}/rawinput/{self.res_hash}/{self.res_hash}'
 
     # def urn(self) -> str:
     #     if self.res_direct:
@@ -211,14 +222,14 @@ class FileRAW(ResourceRAW):
 
 
 class FileRAWCollection(ResourceRAW):
-    res_group = ETL_RAW_FILES
+    res_group = INFIX_INPUT_RAWUNCOMPFILE
 
     def already_ready(self):
         # @TODO actually try check if something change on source
         return self.ready()
 
     def base(self) -> str:
-        return f'{VALT_BASE}/unzipedinput/{self.res_hash}'
+        return f'{DATAVAULT_BASE}/unzipedinput/{self.res_hash}'
 
     def ready(self):
         # if self.res_direct is None and (not self.res_hash or not self.res_group):
@@ -282,7 +293,7 @@ class FileRAWCollection(ResourceRAW):
         for _item in root_directory.glob(parameters):
             # log.exception(f' testing [{str(_item)})]')
             if _item.is_file():
-                selected_path = _item.relative_to(VALT_BASE)
+                selected_path = _item.relative_to(DATAVAULT_BASE)
                 filename_now = _item.name
 
                 if extensions:

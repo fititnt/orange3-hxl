@@ -245,7 +245,7 @@ def browse_local_resource(source: str):
     if source:
         if Path(source).is_dir():
             _base = source
-        elif Path(source.is_file()):
+        elif Path(source).is_file():
             _base = Path(source).parent
     if _base:
         # Windows
