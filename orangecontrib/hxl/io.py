@@ -11,34 +11,41 @@ log = logging.getLogger(__name__)
 
 
 class RAWFileReader(FileFormat):
-    """Reader for comma separated files"""
+    """Reader for RAW"""
 
-    EXTENSIONS = ('.txt', '.raw')
+    # EXTENSIONS = ('.raw', '.csv', '.tsv', '.xlsx')
+    # EXTENSIONS = ('*.*')
+    EXTENSIONS = ('.raw')
     DESCRIPTION = 'Raw file'
     DELIMITERS = ',;:\t$ '
     SUPPORT_COMPRESSED = False
     SUPPORT_SPARSE_DATA = False
-    PRIORITY = 20
-    OPTIONAL_TYPE_ANNOTATIONS = True
+    PRIORITY = 1
+    OPTIONAL_TYPE_ANNOTATIONS = False
 
     def read(self):
         pass
 
     @classmethod
     def write_file(cls, filename, data, with_annotations=True):
-
-        log.exception('RAWFileReader TODO called')
-        log.exception(filename)
-        log.exception(data)
-
-        # with cls.open(filename, mode='wt', newline='', encoding='utf-8') as file:
-        #     writer = csv.writer(file, delimiter=cls.DELIMITERS[0])
-        #     cls.write_headers(writer.writerow, data, with_annotations)
-        #     cls.write_data(writer.writerow, data)
-        #     cls.write_table_metadata(filename, data)
+        raise DeprecationWarning('Use raw_resource_export')
 
 
 def raw_resource_export(res: ResourceRAW, export_path: str):
+    """raw_resource_export export resource on internal DataVault
+
+    Args:
+        res (ResourceRAW): _description_
+        export_path (str): _description_
+
+    Raises:
+        NotImplementedError: _description_
+        IOError: _description_
+        NotImplementedError: _description_
+
+    Returns:
+        _type_: _description_
+    """
     log.exception(['raw_resource_export called', res.base(), export_path])
     # log.exception(res)
     # log.exception(export_path)

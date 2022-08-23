@@ -19,7 +19,9 @@ log = logging.getLogger(__name__)
 
 class HXLRAWSave(OWSaveBase):
     name = "Raw Save"
-    description = "[DRAFT] Export a FileRAW"
+    description = """
+    [WORKING DRAFT] Export a FileRAW outside the internal DataVault
+    """
     # icon = "icons/Save.svg"
     # category = "Data"
     # keywords = ["export"]
@@ -27,12 +29,12 @@ class HXLRAWSave(OWSaveBase):
     icon = "icons/mywidget.svg"
     priority = 67  # where in the widget order it will appear
     category = "Orange3-HXLvisualETL"
-    keywords = ["widget", "data", "save"]
+    keywords = ["widget", "data", "save", "export", "raw"]
 
     # settings_version = 3
 
     class Inputs:
-        data = Input("Data", Table)
+        # data = Input("Data", Table)
         fileraw = Input("FileRAW", FileRAW)
 
     class Error(OWSaveBase.Error):
@@ -40,22 +42,22 @@ class HXLRAWSave(OWSaveBase):
 
     add_type_annotations = Setting(True)
 
-    # builtin_order = [RAWFileReader, TabReader, CSVReader,
-    #                  PickleReader, ExcelReader, XlsReader]
+    builtin_order = [RAWFileReader, TabReader, CSVReader,
+                     PickleReader, ExcelReader, XlsReader]
     builtin_order = [RAWFileReader]
 
     def __init__(self):
         super().__init__(2)
-        self.grid.addWidget(
-            gui.checkBox(
-                None, self, "add_type_annotations",
-                "Add type annotations to header",
-                tooltip="Some formats (Tab-delimited, Comma-separated) can include \n"
-                "additional information about variables types in header rows.",
-                callback=self.update_messages),
-            0, 0, 1, 2)
-        self.grid.setRowMinimumHeight(1, 8)
-        self.adjustSize()
+        # self.grid.addWidget(
+        #     gui.checkBox(
+        #         None, self, "add_type_annotations",
+        #         "Add type annotations to header",
+        #         tooltip="Some formats (Tab-delimited, Comma-separated) can include \n"
+        #         "additional information about variables types in header rows.",
+        #         callback=self.update_messages),
+        #     0, 0, 1, 2)
+        # self.grid.setRowMinimumHeight(1, 8)
+        # self.adjustSize()
 
     @classmethod
     def get_filters(cls):
@@ -65,6 +67,10 @@ class HXLRAWSave(OWSaveBase):
         writers.sort(key=lambda writer: cls.builtin_order.index(writer)
                      if writer in cls.builtin_order else 99)
 
+        log.exception(['get_filters TODO called', writers])
+
+        writers = [RAWFileReader]
+
         return {
             **{f"{w.DESCRIPTION} (*{w.EXTENSIONS[0]})": w
                for w in writers},
@@ -72,10 +78,10 @@ class HXLRAWSave(OWSaveBase):
                for w in writers if w.SUPPORT_COMPRESSED}
         }
 
-    @Inputs.data
-    def dataset(self, data):
-        self.data = data
-        self.on_new_input()
+    # @Inputs.data
+    # def dataset(self, data):
+    #     self.data = data
+    #     self.on_new_input()
 
     @Inputs.fileraw
     def set_fileraw(self, fileraw):
@@ -92,16 +98,9 @@ class HXLRAWSave(OWSaveBase):
             self.fileraw = None
 
     def do_save(self):
-        log.exception(['do_save TODO called', self.fileraw, self.filename])
-        # log.exception(self.fileraw)
+        # log.exception(['do_save TODO called', self.fileraw, self.filename])
 
         return raw_resource_export(res=self.fileraw, export_path=self.filename)
-        # if self.writer is None:
-        #     super().do_save()  # This will do nothing but indicate an error
-        #     return
-        # if self.data.is_sparse() and not self.writer.SUPPORT_SPARSE_DATA:
-        #     return
-        # self.writer.write(self.filename, self.data, self.add_type_annotations)
 
     def update_messages(self):
         return None
