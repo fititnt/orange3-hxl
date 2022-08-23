@@ -238,18 +238,19 @@ def file_raw_info(source: str):
 def file_or_path_raw_metadata(source: str) -> dict:
     # @TODO implement check if directory
     result = {
-        'files': 1,
-        'size': "-1",
-        'path': source,
+        'base': source,
+        'files_total': 1,
+        'size_total': "-1",
         'filetypes': [],
     }
+
     try:
         import magic
         has_magic = True
     except ImportError:
         has_magic = False
 
-    def _details(file: str):
+    def _get_details(file: str):
         return [
             magic.from_file(file, mime=True),
             magic.from_file(file, mime=False),
@@ -257,15 +258,9 @@ def file_or_path_raw_metadata(source: str) -> dict:
 
     if os.path.isfile(source):
         _stat = Path(source).stat()
-        result['size'] = bytes_to_human_readable(_stat.st_size)
+        result['size_total'] = bytes_to_human_readable(_stat.st_size)
         if has_magic:
-            result['filetypes'].append(_details(source))
-        # return {
-        #     'files': 1,
-        #     'size': bytes_to_human_readable(_stat.st_size),
-        #     'path': source,
-        #     # 'meta': file_or_path_raw_metadata(source)
-        # }
+            result['filetypes'].append(_get_details(source))
     elif os.path.isdir(source):
         root_directory = Path(source)
         _size = 0
@@ -278,14 +273,14 @@ def file_or_path_raw_metadata(source: str) -> dict:
                 _size += _item.stat().st_size
 
                 if has_magic:
-                    _details = _details(source)
+                    _details = _get_details(_item)
                     if _details[0] in _mimetypes and _details[1] in _namedtype:
                         continue
                     _mimetypes.append(_details[0])
                     _namedtype.append(_details[1])
                     result['filetypes'].append(_details)
-        result['files'] = _file_count
-        result['files'] = bytes_to_human_readable(_size)
+        result['size_total'] = bytes_to_human_readable(_size)
+        result['files_total'] = _file_count
         # size = sum(f.stat().st_size for f in root_directory.glob('**/*') if f.is_file())
         # @TODO
         # return {
@@ -294,7 +289,7 @@ def file_or_path_raw_metadata(source: str) -> dict:
         #     'path': source
         # }
     else:
-        return None
+        return {'error': str(source)}
 
     return result
 

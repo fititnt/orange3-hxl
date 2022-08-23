@@ -73,9 +73,20 @@ class DataVault:
         return fullname
 
     @staticmethod
-    def resource_path(res_group: str, res_hash: str) -> str:
+    def resource_path(
+        res_group: str = None,
+        res_hash: str = None,
+        res: Type['ResourceRAW'] = None
+    ) -> str:
         # @TODO add something else if we allow user-configuration
         _path = f'{Path.home()}/.orange3data'
+        if res is not None:
+            if isinstance(res, FileRAW):
+                return _path + '/' + res.res_group + '/' + res.res_hash + \
+                '/' + res.res_hash
+            if isinstance(res, FileRAWCollection):
+                return _path + '/' + res.res_group + '/' + res.res_hash
+
         return _path + '/' + res_group + '/' + res_hash + '/' + res_hash
 
     @staticmethod
@@ -119,10 +130,14 @@ class DataVault:
     def resource_detail(res: Type['ResourceRAW']) -> dict:
         if not res:
             return None
+
         if res.res_direct:
             _fullpath = res.res_direct
         else:
-            _fullpath = DataVault.resource_path(res.res_group, res.res_hash)
+            # _fullpath = DataVault.resource_path(res.res_group, res.res_hash)
+            _fullpath = DataVault.resource_path(res=res)
+
+        # return {'todo3': _fullpath}
 
         return file_or_path_raw_metadata(_fullpath)
 

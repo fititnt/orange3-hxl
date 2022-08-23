@@ -1,10 +1,14 @@
 import json
 import logging
+import os
+from pathlib import Path
 
 from Orange.data import Table
 from Orange.widgets import gui
 from Orange.widgets.settings import Setting
 from Orange.widgets.widget import OWWidget, Input, Output, Msg
+
+from AnyQt.QtWidgets import QTextEdit, QFileDialog, QDialog
 
 from orangecontrib.hxl.base import DataVault, FileRAW, FileRAWCollection
 
@@ -25,7 +29,7 @@ class HXLRAWInfo(OWWidget):
     category = "Orange3-HXLvisualETL"
     keywords = ["widget", "data"]
     want_main_area = False
-    resizing_enabled = False
+    resizing_enabled = True
 
     vault: DataVault = None
 
@@ -69,12 +73,19 @@ class HXLRAWInfo(OWWidget):
 
         gui.button(self.action_box, self, "Reload info", callback=self.commit)
 
-        # self.label_box = gui.lineEdit(
-        #     self.controlArea, self, "label", box="Text", callback=self.commit)
+        self._base_active = None
 
-        # log.exception('HXLSelectFile init')
-        box = gui.widgetBox(self.controlArea, "Info")
-        self.infoa = gui.widgetLabel(box, "No comments")
+        self.infos_box = gui.widgetBox(
+            self.controlArea, "Detailed information")
+        self.browse_button = gui.button(
+            self.infos_box, self, "Browse",
+            callback=self.browse_active)
+
+        self.feedback_box = gui.widgetBox(self.infos_box, "Feedback")
+        self.feedback_box.setVisible(True)
+        self.feedback = QTextEdit(self.feedback_box)
+        # self.feedback.setPlainText('No specific feedback')
+        self.feedback_box.layout().addWidget(self.feedback)
 
     @Inputs.fileraw
     def set_fileraw(self, fileraw):
@@ -82,7 +93,11 @@ class HXLRAWInfo(OWWidget):
         #log.exception(f'unzipfile set_fileraw [{str(fileraw)}]')
         if fileraw:
             self.fileraw = fileraw
-            self.commit()
+
+            # @TODO does exist some way to check if user have the windown
+            #       open? If yes, then we could autocommit, for now is
+            #       commented out
+            # self.commit()
         else:
             self.fileraw = None
 
@@ -91,9 +106,32 @@ class HXLRAWInfo(OWWidget):
         """set_filerawcollection"""
         if filerawcollection:
             self.filerawcollection = filerawcollection
-            self.commit()
+
+            # @TODO does exist some way to check if user have the windown
+            #       open? If yes, then we could autocommit, for now is
+            #       commented out
+            # self.commit()
         else:
             self.filerawcollection = None
+
+    def browse_active(self):
+        """browse_active"""
+        _base = None
+        if self._base_active is not None:
+            if Path(self._base_active).is_dir():
+                _base = self._base_active
+            elif Path(self._base_active).is_file():
+                _base = Path(self._base_active).parent
+        if _base:
+            if hasattr(os, 'startfile'):
+                os.startfile(_base)
+            else:
+                import subprocess
+                import sys
+                opener = "open" if sys.platform == "darwin" else "xdg-open"
+                subprocess.call([opener, _base])
+        else:
+            self.feedback.setPlainText('Invalid base')
 
     def commit(self):
         """commit"""
@@ -103,26 +141,28 @@ class HXLRAWInfo(OWWidget):
         #     return None
 
         # fileraw = self.filerawcollection.select()
-        # log.exception(
-        #     f'commit @TODO [{str(self.fileraw)}][{str(self.filerawcollection)}]')
+        log.exception(
+            f'commit @TODO [{str(self.fileraw)}][{str(self.filerawcollection)}]')
         # self.Outputs.fileraw.send(fileraw)
 
-        raw_info = {
-            'fileraw': None,
-            'filerawcollection': None
-        }
-        if self.fileraw:
-            raw_info['fileraw'] = self.vault.resource_detail(
-                self.fileraw)
-
         if self.filerawcollection:
-            raw_info['filerawcollection'] = self.vault.resource_detail(
+            raw_info = self.vault.resource_detail(
                 self.filerawcollection
             )
+            # raw_info = {'todo': 'todoo'}
+        else:
+            raw_info = self.vault.resource_detail(
+                self.fileraw)
 
-        # self.infoa.setText(json.dumps(raw_info))
-        self.infoa.setText(json.dumps(
-            raw_info, indent=4, sort_keys=True, ensure_ascii=False, default=vars))
+        if raw_info and 'base' in raw_info:
+            self._base_active = raw_info['base']
+            self.browse_button.setText(f'Browse {str(self._base_active)}')
+        else:
+            self.browse_button.setText(f'Browse')
+            self._base_active = None
+
+        self.feedback.setPlainText(json.dumps(
+            raw_info, indent=4, sort_keys=False, ensure_ascii=False, default=vars))
 
     def send_report(self):
         """send_report"""
