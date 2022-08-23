@@ -113,11 +113,14 @@ The new widget appears in the toolbox bar under the section Example.
 ![screenshot](https://raw.githubusercontent.com/biolab/orange3-example-addon/master/screenshot.png)
 
 
+<!--
 ## TODOs
 
 - https://github.com/fititnt/orange3-hxl/issues/1
+- https://realpython.com/python-pyqt-qthread/
 - (...)
 
+-->
 <!--
 orange-canvas --no-welcome --no-splash
 
