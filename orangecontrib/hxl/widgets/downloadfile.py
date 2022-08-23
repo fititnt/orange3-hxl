@@ -112,6 +112,8 @@ class HXLDownloadFile(OWWidget):
         # #: An executor we use to submit learner evaluations into a thread pool
         # self._executor = ThreadExecutor()
 
+        # progress = gui.ProgressBar(self)
+
         if DataVault.resource_summary('rawinput', res_hash) is not None:
             # log.exception('downloadfile init already exist, sending rigth now')
             self.commit()

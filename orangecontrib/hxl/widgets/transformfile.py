@@ -21,6 +21,7 @@ from AnyQt.QtCore import (
     Qt, QFileInfo, QTimer, QSettings, QObject, QSize, QMimeDatabase, QMimeType
 )
 
+# @TODO maybe implement https://github.com/geopandas/geopandas
 
 # from Orange.widgets.utils.domaineditor import DomainEditor
 
