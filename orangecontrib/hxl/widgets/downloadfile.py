@@ -12,11 +12,15 @@ from Orange.widgets.widget import OWWidget, Input, Output, Msg
 import concurrent.futures
 from Orange.widgets.utils.concurrent import ThreadExecutor, FutureWatcher, methodinvoke
 from Orange.widgets.utils.widgetpreview import WidgetPreview
-from AnyQt.QtCore import QThread, pyqtSlot
+from AnyQt.QtCore import Qt, QThread, pyqtSlot
+from AnyQt.QtWidgets import \
+    QStyle, QComboBox, QMessageBox, QGridLayout, QLabel, \
+    QLineEdit, QSizePolicy as Policy, QCompleter
 from functools import reduce, partial
 from Orange.widgets.utils.concurrent import ConcurrentWidgetMixin, TaskState
 
 from orangecontrib.hxl.base import FileRAW
+from orangecontrib.hxl.vars import RESOURCE_DATAVAULT_CACHE_TTL, RESOURCE_DATAVAULT_CACHE_TTL__HELP, RESOURCE_DATAVAULT_CACHING_KIND, RESOURCE_DATAVAULT_CACHING_KIND__HELP
 from orangecontrib.hxl.widgets.mixin import HXLWidgetFeedbackMixin
 from orangecontrib.hxl.widgets.utils import hash_intentionaly_weak
 
@@ -39,12 +43,13 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
     category = "Orange3-HXLvisualETL"
     keywords = ["widget", "data"]
     want_main_area = False
-    resizing_enabled = False
+    resizing_enabled = True
 
     res_alias = Setting("", schema_only=True)
     res_hash = Setting("", schema_only=True)
     res_cache_kind = Setting("", schema_only=True)
     res_cache_ttl = Setting("", schema_only=True)
+    ui_pro = Setting(False)
     source_uri_main = Setting("", schema_only=True)
     source_uri_alt = Setting("", schema_only=True)
     source_uri_alt2 = Setting("", schema_only=True)
@@ -84,39 +89,8 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
         self.vault = DataVault()
         self.fileraw = FileRAW()
 
-        self.res_alias_box = gui.lineEdit(
-            self.controlArea, self, "res_alias", box="Friendly alias (optional)")
+        self._init_ui()
 
-        self.main_uri_box = gui.lineEdit(
-            self.controlArea, self, "source_uri_main", box="Remote URI of main source", callback=self.commit)
-
-        self.alt_uri_box = gui.lineEdit(
-            self.controlArea, self, "source_uri_alt", box="Remote URI, backup alternative 1", callback=self.commit)
-
-        self.alt2_uri_box = gui.lineEdit(
-            self.controlArea, self, "source_uri_alt2", box="Remote URI, backup alternative 2", callback=self.commit)
-
-        gui.separator(self.controlArea)
-        self.optionsBox = gui.widgetBox(self.controlArea, "Options")
-
-        gui.button(
-            self.optionsBox, self, "(Re)Download", callback=self.commit_forced)
-
-        # self.res_hash_box.setText('teste')
-
-        gui.separator(self.controlArea)
-        self.infos_box = gui.widgetBox(
-            self.controlArea, "Detailed information")
-
-        self.browse_button = gui.button(
-            self.infos_box, self, "Browse",
-            callback=self.browse_active)
-
-        box = gui.widgetBox(self.infos_box, "Info")
-        self.infoa = gui.widgetLabel(box, "No comments")
-
-        self.res_hash_box = gui.lineEdit(
-            self.infos_box, self, "res_hash", box="Internal ID")
         # self.res_hash_box.setDisabled(True)
 
         # log.exception('downloadfile init')
@@ -137,6 +111,104 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
             self.commit()
             # self.commit.deferred()
             # self.commit.now()
+
+    def _init_ui(self):
+
+        self.controlArea.setSizePolicy(Policy.Expanding, Policy.Fixed)
+
+        self.action_box = gui.widgetBox(
+            self.controlArea, "Actions")
+
+        self.action_box.setSizePolicy(Policy.Expanding, Policy.Fixed)
+
+        # self.action_p1_box = gui.widgetBox(
+        #     self.action_box, False, Qt.Horizontal)
+        self.action_p1_box = gui.hBox(
+            self.action_box)
+
+        self.res_cache_kind_combo = QComboBox(self)
+        for _label, _value in RESOURCE_DATAVAULT_CACHING_KIND.items():
+            self.res_cache_kind_combo.addItem(_label, _value)
+
+        self.res_cache_kind_combo.setToolTip(
+            RESOURCE_DATAVAULT_CACHING_KIND__HELP)
+        self.action_p1_box.layout().addWidget(self.res_cache_kind_combo)
+
+        self.res_cache_ttl_combo = QComboBox(self)
+        for _label, _value in RESOURCE_DATAVAULT_CACHE_TTL.items():
+            self.res_cache_ttl_combo.addItem(_label, _value)
+
+        self.res_cache_ttl_combo.setToolTip(RESOURCE_DATAVAULT_CACHE_TTL__HELP)
+        self.action_p1_box.layout().addWidget(self.res_cache_ttl_combo)
+
+        gui.checkBox(
+            self.action_p1_box, master=self,
+            value='ui_pro', label="Advanced",
+            labelWidth=0,
+            callback=self._init_ui_refresh)
+
+        self.main_uri_box = gui.lineEdit(
+            self.action_box, self, "source_uri_main", box="Remote URI of main source", callback=self.commit)
+
+        self.action_p2_box = gui.vBox(
+            self.action_box)
+        self.action_p2_box.hide()
+
+        self.res_alias_box = gui.lineEdit(
+            self.action_p2_box, self, "res_alias", box="Friendly alias (optional)")
+
+        self.alt_uri_box = gui.lineEdit(
+            self.action_p2_box, self, "source_uri_alt", box="Remote URI, backup alternative 1", callback=self.commit)
+
+        self.alt2_uri_box = gui.lineEdit(
+            self.action_p2_box, self, "source_uri_alt2", box="Remote URI, backup alternative 2", callback=self.commit)
+
+        gui.separator(self.controlArea)
+        self.optionsBox = gui.widgetBox(self.controlArea, "Options")
+
+        self.optionsBox.setSizePolicy(Policy.Expanding, Policy.Fixed)
+
+        gui.button(
+            self.optionsBox, self, "(Re)Download", callback=self.commit_forced)
+
+        # self.res_hash_box.setText('teste')
+
+        gui.separator(self.controlArea)
+        self.infos_box = gui.widgetBox(
+            self.controlArea, "Detailed information")
+        self.infos_box.setSizePolicy(Policy.Expanding, Policy.Fixed)
+
+        self.browse_button = gui.button(
+            self.infos_box, self, "Browse",
+            callback=self.browse_active)
+
+        box = gui.widgetBox(self.infos_box, "Info")
+
+        # self.box.setSizePolicy(Policy.Expanding, Policy.Fixed)
+        self.infoa = gui.widgetLabel(box, "No comments")
+
+        self.res_hash_box = gui.lineEdit(
+            self.infos_box, self, "res_hash", box="Internal ID")
+
+        self._init_ui_refresh()
+
+    def _init_ui_refresh(self):
+        if self.ui_pro:
+            self.res_alias_box.setDisabled(False)
+            # self.res_alias_box.show()
+            self.alt_uri_box.setDisabled(False)
+            # self.alt_uri_box.show()
+            self.alt2_uri_box.setDisabled(False)
+            # self.alt2_uri_box.show()
+            self.action_p2_box.show()
+        else:
+            self.res_alias_box.setDisabled(True)
+            # self.res_alias_box.hide()
+            self.alt_uri_box.setDisabled(True)
+            # self.alt_uri_box.hide()
+            self.alt2_uri_box.setDisabled(True)
+            # self.alt2_uri_box.hide()
+            self.action_p2_box.hide()
 
     # @gui.deferred
     # def commit(self) -> None:

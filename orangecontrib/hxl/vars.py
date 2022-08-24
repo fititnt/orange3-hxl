@@ -45,13 +45,20 @@ THROTTLING_GENERIC_MINIMUM = 60
 
 
 # Resource options _________________________________________________________
-RESOURCE_DATAVAULT_CACHING = {
+RESOURCE_DATAVAULT_CACHING_KIND__HELP = """
+Kind of resource. Please set it to the public if resources have no personal
+information and checking new versions from source can overload servers.
+"""
+RESOURCE_DATAVAULT_CACHING_KIND = {
     'unknown': 0,
-    'public': 10,
-    'sensitive': -10,
+    'public data': 10,
+    'sensitive data': -10,
     # 'sensitive++': -20,  # @TODO disk encryption for cached files with trow-away key usable while app not closed (or crashed)
 }
-
+RESOURCE_DATAVAULT_CACHE_TTL__HELP = """
+Default time the resource will be considered new, without trying to check
+servers for updates.
+"""
 RESOURCE_DATAVAULT_CACHE_TTL = {
     '1 month': 2629800,
     '1 week': 604800,
