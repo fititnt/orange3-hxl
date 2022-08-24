@@ -31,6 +31,7 @@ import csv
 import os
 from pathlib import Path
 import shutil
+from typing import Union
 import requests
 from Orange.data.io import FileFormat
 
@@ -130,3 +131,4 @@ def http_request_head(uri: str) -> dict:
     result['headers'] = response.headers
     # print('tst')
     return response, result
+

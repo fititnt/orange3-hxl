@@ -20,7 +20,7 @@ from functools import reduce, partial
 from Orange.widgets.utils.concurrent import ConcurrentWidgetMixin, TaskState
 
 from orangecontrib.hxl.base import FileRAW
-from orangecontrib.hxl.vars import RESOUCE_ALIAS__HELP, RESOUCE_URI_FALLBACK__HELP, RESOURCE_DATAVAULT_CACHE_TTL, RESOURCE_DATAVAULT_CACHE_TTL__HELP, RESOURCE_DATAVAULT_CACHING_KIND, RESOURCE_DATAVAULT_CACHING_KIND__HELP
+from orangecontrib.hxl.vars import RESOUCE_ALIAS__HELP, RESOUCE_URI_FALLBACK__HELP, RESOUCE_VALIDATE_HAVESTRING__PLACEHOLDER, RESOUCE_VALIDATE_MIMETYPES__PLACEHOLDER, RESOUCE_VALIDATE_NOTHAVESTRING__PLACEHOLDER, RESOURCE_DATAVAULT_CACHE_TTL, RESOURCE_DATAVAULT_CACHE_TTL__HELP, RESOURCE_DATAVAULT_CACHING_KIND, RESOURCE_DATAVAULT_CACHING_KIND__HELP
 from orangecontrib.hxl.widgets.mixin import HXLWidgetFeedbackMixin
 from orangecontrib.hxl.widgets.utils import hash_intentionaly_weak
 
@@ -49,9 +49,9 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
     res_hash = Setting("", schema_only=True)
     res_cache_kind = Setting("", schema_only=True)
     res_cache_ttl = Setting("", schema_only=True)
-    res_check_mimetypes = Setting("", schema_only=True)
-    res_check_havestring = Setting("", schema_only=True)
-    res_check_nothavestring = Setting("", schema_only=True)
+    res_valid_mimetypes = Setting("", schema_only=True)
+    res_valid_havestring = Setting("", schema_only=True)
+    res_valid_nothavestring = Setting("", schema_only=True)
     ui_pro = Setting(False)
     source_uri_main = Setting("", schema_only=True)
     source_uri_alt = Setting("", schema_only=True)
@@ -189,6 +189,36 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
 
         self.res_alias_box.setToolTip(RESOUCE_ALIAS__HELP)
 
+        self.resource_validation_box = gui.widgetBox(
+            self.action_p2_box, "Validation")
+
+        self.res_valid_havestring_box = gui.lineEdit(
+            self.resource_validation_box, self, "res_valid_havestring",
+            orientation=Qt.Horizontal,
+            label="Must have text", callback=None)
+
+        self.res_valid_havestring_box.setPlaceholderText(
+            RESOUCE_VALIDATE_HAVESTRING__PLACEHOLDER
+        )
+
+        self.res_valid_nothavestring_box = gui.lineEdit(
+            self.resource_validation_box, self, "res_valid_nothavestring",
+            orientation=Qt.Horizontal,
+            label="Must NOT have text", callback=None)
+
+        self.res_valid_nothavestring_box.setPlaceholderText(
+            RESOUCE_VALIDATE_NOTHAVESTRING__PLACEHOLDER
+        )
+
+        self.res_valid_mimetypes_box = gui.lineEdit(
+            self.resource_validation_box, self, "res_valid_mimetypes",
+            orientation=Qt.Horizontal,
+            label="Mime types", callback=None)
+
+        self.res_valid_mimetypes_box.setPlaceholderText(
+            RESOUCE_VALIDATE_MIMETYPES__PLACEHOLDER
+        )
+
         gui.button(
             self.action_box, self, "(Re)Download", callback=self.commit_forced)
 
@@ -214,7 +244,8 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
         self.infoa = gui.widgetLabel(box, "No comments")
 
         self.res_hash_box = gui.lineEdit(
-            self.infos_box, self, "res_hash", box="Internal ID")
+            self.infos_box, self, "res_hash",
+            box="Internal ID (based on alias or main source URL)")
 
         self._init_ui_refresh()
 

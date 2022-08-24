@@ -747,6 +747,7 @@ def string_to_list(
 
     """
     result = []
+    # @TODO implement check to see if character is escaped, e.g. "\|" for "|"
     if text and isinstance(text, str):
         if delimiters is None:
             delimiters = ['|', ',', "\t"]

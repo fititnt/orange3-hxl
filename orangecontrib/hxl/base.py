@@ -1,6 +1,7 @@
 
 from abc import ABC, abstractmethod
 from ctypes import Union
+from dataclasses import dataclass
 import os
 from pathlib import Path
 from genericpath import exists, isdir, isfile
@@ -17,7 +18,7 @@ from Orange.widgets.utils.state_summary import format_summary_details, \
 from AnyQt.QtCore import Qt
 from orangecontrib.hxl.vars import DATAVAULT_BASE, INFIX_INPUT_RAWFILE, INFIX_INPUT_RAWTRANSFILE, INFIX_INPUT_RAWUNCOMPFILE
 
-from orangecontrib.hxl.widgets.utils import bytes_to_human_readable, file_or_path_raw_metadata
+from orangecontrib.hxl.widgets.utils import bytes_to_human_readable, file_or_path_raw_metadata, string_to_list
 
 log = logging.getLogger(__name__)
 
@@ -348,6 +349,110 @@ class FileRAWCollection(ResourceRAW):
         # log.exception(f' final result [{str(_result)})]')
         return _file_raw
         return None
+
+
+@dataclass
+class ValidationCheckResource:
+    """Dataclass to envelope valid checks to check downloaded resources
+
+    It's quite rudimentar, but can work for early checks to abort operations
+    """
+    res_valid_mimetypes: list = None
+    res_valid_havestring: list = None
+    res_valid_nothavestring: list = None
+
+    def __init__(
+        self,
+        res_valid_mimetypes: Union[list, str],
+        res_valid_havestring: Union[list, str],
+        res_valid_nothavestring: Union[list, str],
+    ) -> None:
+        if res_valid_mimetypes:
+            if isinstance(res_valid_mimetypes, str):
+                res_valid_mimetypes = string_to_list(res_valid_mimetypes, '|')
+            self.res_valid_mimetypes = res_valid_mimetypes
+
+        if res_valid_havestring:
+            if isinstance(res_valid_havestring, str):
+                res_valid_havestring = string_to_list(
+                    res_valid_havestring, '|')
+            self.res_valid_havestring = res_valid_havestring
+
+        if res_valid_nothavestring:
+            if isinstance(res_valid_nothavestring, str):
+                res_valid_nothavestring = string_to_list(
+                    res_valid_nothavestring, '|')
+            self.res_valid_nothavestring = res_valid_nothavestring
+
+    def file_valid_check(
+        self,
+        file_path: str
+    ) -> tuple(bool, str):
+
+        is_valid = False
+        is_valid_havetext = None
+        is_valid_nothavetext = None
+        is_valid_mimetype = None
+        info = []
+
+        mimetypes: self.res_valid_mimetypes
+        havetext: self.res_valid_havestring
+        nothavetext: self.res_valid_nothavestring
+
+        # Abort early for obvious wrong fail.
+        if not Path(file_path).is_file():
+            return False, "File not exist on disk"
+
+        if mimetypes is not None:
+            try:
+                import magic
+                has_magic = True
+            except ImportError:
+                has_magic = False
+
+            if has_magic:
+                _filemime = magic.from_file(file_path, mime=True)
+                if _filemime not in mimetypes:
+                    is_valid_mimetype = False
+                    info.append(f'Mime type [{_filemime}] not match')
+            else:
+                info.append('magic not installed. ignoring mime type check')
+
+        if havetext is not None or nothavetext is not None:
+            sample = False
+            try:
+                with open(file_path, "r") as f:
+                    sample = f.read(16384)
+            except UnicodeDecodeError:
+                pass  # Fond non-text data
+
+            if sample is False or len(sample) == 0:
+                is_valid = False
+                info.append(f'File is either empty or is binary')
+                return is_valid, is_valid, '; '.join(info)
+
+        if havetext is not None:
+            is_valid_havetext = False
+            for item in havetext:
+                if sample.find(item) > -1:
+                    is_valid_havetext = True
+                    break
+            if is_valid_havetext is False:
+                info.append(f'File does not have any of havetext checks')
+        if nothavetext is not None:
+            is_valid_nothavetext = True
+            for item in nothavetext:
+                if not sample.find(item) == -1:
+                    is_valid_nothavetext = False
+                    info.append(f'File contains {item} of nothavetext')
+                    break
+
+        if is_valid_mimetype is not False and \
+            is_valid_havetext is not False and \
+                is_valid_nothavetext is not False:
+            is_valid = True
+
+        return is_valid, '; '.join(info)
 
 
 def format_summary_details_hxl(data):

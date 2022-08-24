@@ -45,9 +45,9 @@ THROTTLING_GENERIC_MINIMUM = 60
 
 
 # Resource options _________________________________________________________
-RESOURCE_DATAVAULT_CACHING_KIND__HELP = """
-Kind of resource. Please set it to the public if resources have no personal
-information and checking new versions from source can overload servers.
+RESOURCE_DATAVAULT_CACHING_KIND__HELP = """\
+Kind of resource. Please set it to the public if resources have no personal \
+information and checking new versions from source can overload servers.\
 """
 RESOURCE_DATAVAULT_CACHING_KIND = {
     'unknown': 0,
@@ -55,9 +55,9 @@ RESOURCE_DATAVAULT_CACHING_KIND = {
     'sensitive data': -10,
     # 'sensitive++': -20,  # @TODO disk encryption for cached files with trow-away key usable while app not closed (or crashed)
 }
-RESOURCE_DATAVAULT_CACHE_TTL__HELP = """
-Default time the resource will be considered new, without trying to check
-servers for updates.
+RESOURCE_DATAVAULT_CACHE_TTL__HELP = """\
+Default time the resource will be considered new, without trying to check \
+servers for updates.\
 """
 RESOURCE_DATAVAULT_CACHE_TTL = {
     '1 month': 2629800,
@@ -69,15 +69,28 @@ RESOURCE_DATAVAULT_CACHE_TTL = {
     # '': 0,
 }
 
-RESOUCE_ALIAS__HELP = """
-Alias can be used as mnemonic reference (example "urn:data:cod:ab:ago?geojson"
-instead of "http://my-long-url.org/(...)iso3=AGO&format=geojson") to replace
-the URL of source as reference for internal hashing. This allow reuse of
-Orange workflow file and local caching.
+RESOUCE_ALIAS__HELP = """\
+Alias can be used as mnemonic reference (example "urn:data:cod:ab:ago?geojson" \
+instead of "http://my-long-url.org/(...)iso3=AGO&format=geojson") to replace \
+the URL of source as reference for internal hashing. This allow reuse of \
+Orange workflow file and local caching.\
 """
 
-RESOUCE_URI_FALLBACK__HELP = """
-Fallback URIs will be used if main source is offline do not pass vality checks.
+RESOUCE_URI_FALLBACK__HELP = """\
+Fallback URIs will be used if main source is offline do not pass vality checks.\
+"""
+
+RESOUCE_VALIDATE_HAVESTRING__PLACEHOLDER = """\
+Example: Country code|The "country code" is|Value with \\| pipe\
+"""
+
+RESOUCE_VALIDATE_NOTHAVESTRING__PLACEHOLDER = """\
+Example: Welcome to nginx!|Guru Meditation\
+"""
+
+RESOUCE_VALIDATE_MIMETYPES__PLACEHOLDER = """\
+Example: text/csv|text/tab-separated-values|\
+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 """
 
 # Mimetypes _________________________________________________________________
