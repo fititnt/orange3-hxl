@@ -41,11 +41,13 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
     want_main_area = False
     resizing_enabled = False
 
-    res_alias = Setting("")
-    res_hash = Setting("")
-    source_uri_main = Setting("")
-    source_uri_alt = Setting("")
-    source_uri_alt2 = Setting("")
+    res_alias = Setting("", schema_only=True)
+    res_hash = Setting("", schema_only=True)
+    res_cache_kind = Setting("", schema_only=True)
+    res_cache_ttl = Setting("", schema_only=True)
+    source_uri_main = Setting("", schema_only=True)
+    source_uri_alt = Setting("", schema_only=True)
+    source_uri_alt2 = Setting("", schema_only=True)
 
     # active_fileraw = None
 
@@ -199,7 +201,7 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
 
     def commit_forced(self):
         self.commit(forced=True)
-        self.Warning.primary_source_fail()
+        # self.Warning.primary_source_fail()
         pass
 
     def send_report(self):

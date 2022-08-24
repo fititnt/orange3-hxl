@@ -4,6 +4,8 @@
 import os
 from pathlib import Path
 
+# Data Vault local storage __________________________________________________
+
 # Unless DATAVAULT_BASE is set, we use '~/.orange3data' for everything
 DATAVAULT_BASE = os.environ.get(
     'DATAVAULT_BASE',
@@ -14,7 +16,53 @@ INFIX_INPUT_RAWTRANSFILE = 'transformedinput'
 INFIX_INPUT_RAWUNCOMPFILE = 'unzipedinput'
 INFIX_INPUT_RAWTEMP = 'inputtemp'
 
-# HTTP status, how to react _________________________________________________
+# Requests via API; identification __________________________________________
+# @see https://www.mediawiki.org/wiki/API:Etiquette
+# ini_set('user_agent', 'MyCoolTool/1.1 (https://example.org/MyCoolTool/; MyCoolTool@example.org) UsedBaseLibrary/1.4');
+_VERSION = "0.3.1rc1"
+_BOTPOLICYLINK = "https://github.com/fititnt/orange3-hxl"  # @TODO needs to be updated
+
+USER_CONTACT_MAIL = os.environ.get(
+    'USER_CONTACT_MAIL',
+    'anonymous@example.org'
+)
+GENERIC_CONTACT_MAIL = os.environ.get(
+    'GENERIC_CONTACT_MAIL',
+    'anonymous@example.org'
+)
+
+HTTP_USER_AGENT__AUTH = f'Orange3-HXLvisualETL/{_VERSION} ({_BOTPOLICYLINK}; {USER_CONTACT_MAIL})'
+HTTP_USER_AGENT__GENERIC = ''
+
+# Requests via API; limits ____________________________________________________
+# @TODO this part if a draft; requires responsible GUI issue solved
+#       (https://github.com/fititnt/orange3-hxl/issues/3)
+THROTTLING_AUTHENTICAED_DEFAULT = 60
+THROTTLING_AUTHENTICAED_MINIMUM = 10
+
+THROTTLING_GENERIC_DEFAULT = 60
+THROTTLING_GENERIC_MINIMUM = 60
+
+
+# Resource options _________________________________________________________
+RESOURCE_DATAVAULT_CACHING = {
+    'unknown': 0,
+    'public': 10,
+    'sensitive': -10,
+    # 'sensitive++': -20,  # @TODO disk encryption for cached files with trow-away key usable while app not closed (or crashed)
+}
+
+RESOURCE_DATAVAULT_CACHE_TTL = {
+    '1 month': 2629800,
+    '1 week': 604800,
+    '3 days': 259200,
+    '1 day': 86400,
+    '12 hours': 43200,
+    '1 hour': 3600,
+    # '': 0,
+}
+
+# HTTP status, how to react ___________________________________________________
 # for already locally cached resource, response code like this means erase
 # local caches compatible with how sensitive content was marked initially
 HTTP_STATUS_HARDFAIL = [
