@@ -6,6 +6,7 @@ from pathlib import Path
 from genericpath import exists, isdir, isfile
 from re import Pattern
 import re
+import shutil
 from typing import Tuple, Type, Union
 
 import requests
@@ -97,11 +98,19 @@ class DataVault:
         r = requests.get(source_uri, allow_redirects=True)
         # @TODO make checks if source is correct, not error, etc
 
+        if not ValidationCheckResource.is_http_status_code_okay_save(
+                r.status_code):
+            return None, False, f'Status code not okay {r.status_code}'
+
         if validator is not None:
             log.exception('download_resource validator...')
             open(fullname_temp, 'wb').write(r.content)
             is_valid, info = validator.file_valid_check(fullname_temp)
             log.exception([is_valid, info])
+            if is_valid:
+                if exists(fullname):
+                    os.remove(fullname)
+                shutil.copyfile(fullname_temp, fullname)
         else:
             log.exception('download_resource validator skiped')
             open(fullname, 'wb').write(r.content)
@@ -507,6 +516,13 @@ class ValidationCheckResource:
             is_valid = True
 
         return is_valid, '; '.join(info)
+
+    @staticmethod
+    def is_http_status_code_okay_save(code: int):
+        return code in [200]
+
+    # def is_http_status_code_okay_save(self, code: int):
+    #     return code in [200]
 
 
 def format_summary_details_hxl(data):

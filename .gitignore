@@ -29,5 +29,5 @@ doc/_build
 
 
 # Temp
-orangecontrib/hxl/widgets/OWLearningCurveC.py
-# orangecontrib/hxl/widgets/rawsave.py
+# orange-via-cli.py
+# pytest.ini

@@ -53,7 +53,7 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
     res_valid_mimetypes = Setting("", schema_only=True)
     res_valid_havestring = Setting("", schema_only=True)
     res_valid_nothavestring = Setting("", schema_only=True)
-    ui_pro = Setting(False)
+    ui_pro = Setting(False, schema_only=True)
     source_uri_main = Setting("", schema_only=True)
     source_uri_alt = Setting("", schema_only=True)
     source_uri_alt2 = Setting("", schema_only=True)
@@ -81,9 +81,10 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
         # fallback_2_failed = Msg("Fallback 2 failed")
 
     class Information(OWWidget.Information):
-        primary_source_failed = Msg("Primary source failed {}")
-        fallback_1_failed = Msg("Fallback 1 failed {}")
-        fallback_2_failed = Msg("Fallback 2 failed {}")
+        primary_source_failed = Msg("Primary source failed [{}]")
+        fallback_1_failed = Msg("Fallback 1 failed [{}]")
+        fallback_2_failed = Msg("Fallback 2 failed [{}]")
+        output_using = Msg("Output is now using [{}]")
 
     class Error(OWWidget.Error):
         all_sources_failed = \
@@ -123,6 +124,7 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
         if DataVault.resource_summary('rawinput', res_hash) is not None:
             # log.exception('downloadfile init already exist, sending rigth now')
             self.commit()
+            self._init_ui_refresh()
             # self.commit.deferred()
             # self.commit.now()
 
@@ -281,6 +283,11 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
             self.res_validator.res_valid_havestring = \
                 self.res_valid_nothavestring
 
+        if self._base_active:
+            self.browse_button.setText(f'Browse {str(self._base_active)}')
+        else:
+            self.browse_button.setText(f'Browse not ready')
+
     # @gui.deferred
     # def commit(self) -> None:
     #     self.Error.clear()
@@ -292,6 +299,8 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
 
     def commit(self, forced=False, ttl: int = None):
         """commit"""
+
+        log.exception('downloadfile commit')
         # _hash_refs_a = self.res_id_box.text()
         # _hash_refs_b = self.main_uri_box.text()
         res_alias = self.res_alias_box.text()
@@ -324,35 +333,34 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
                     validator=self.res_validator)
                 if is_valid is not True:
                     self.Information.fallback_1_failed(info)
+                else:
+                    self.Information.output_using('Fallback 1')
             if is_valid is not True and res_uri_alt2:
                 fullname, is_valid, info = self.vault.download_resource(
                     res_uri_alt2, res_hash, res_alias, use_cache=True,
                     validator=self.res_validator)
                 if is_valid is not True:
                     self.Information.fallback_2_failed(info)
+                else:
+                    self.Information.output_using('Fallback 2')
+        else:
+            self.Information.primary_source_failed.clear()
+            self.Information.fallback_1_failed.clear()
+            self.Information.fallback_2_failed.clear()
+            self.Information.output_using.clear()
+            self.Error.all_sources_failed.clear()
 
         if is_valid is not True:
             self.Error.all_sources_failed()
             self.fileraw = None
             return None
         else:
-            self.Information.primary_source_failed.clear()
-            self.Information.fallback_1_failed.clear()
-            self.Information.fallback_2_failed.clear()
+            # self.Information.primary_source_failed.clear()
+            # self.Information.fallback_1_failed.clear()
+            # self.Information.fallback_2_failed.clear()
             self.Error.all_sources_failed.clear()
             if self.fileraw is None:
                 self.fileraw = FileRAW()
-
-        # if forced:
-        #     result = self.vault.download_resource(
-        #         res_uri, res_hash, res_alias, use_cache=not forced)
-
-        #     self.infoa.setText('result download_resource ' + str(result))
-        # else:
-        #     result = self.vault.download_resource(
-        #         res_uri, res_hash, res_alias, use_cache=not forced)
-        #     self.infoa.setText(
-        #         '(forced) result download_resource ' + str(result))
 
         self.fileraw.set_resource(res_hash, 'rawinput')
 
@@ -363,16 +371,10 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
         if raw_info and 'base' in raw_info:
             self._base_active = raw_info['base']
             self.browse_button.setText(f'Browse {str(self._base_active)}')
+            self._init_ui_refresh()
 
-        # self.start(
-        #     run_v2,
-        #     self.vault,
-        #     self.fileraw,
-        #     res_uri, res_hash, res_alias
-        # )
-
-        # self.Outputs.data.send(self.data)
-        # self.Outputs.data.send(self.fileraw)
+        log.exception('downloadfile commit before send')
+        log.exception(raw_info)
         self.Outputs.fileraw.send(self.fileraw)
 
     def commit_forced(self):
