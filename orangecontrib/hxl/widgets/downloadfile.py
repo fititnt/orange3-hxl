@@ -20,7 +20,7 @@ from functools import reduce, partial
 from Orange.widgets.utils.concurrent import ConcurrentWidgetMixin, TaskState
 
 from orangecontrib.hxl.base import FileRAW
-from orangecontrib.hxl.vars import RESOURCE_DATAVAULT_CACHE_TTL, RESOURCE_DATAVAULT_CACHE_TTL__HELP, RESOURCE_DATAVAULT_CACHING_KIND, RESOURCE_DATAVAULT_CACHING_KIND__HELP
+from orangecontrib.hxl.vars import RESOUCE_ALIAS__HELP, RESOUCE_URI_FALLBACK__HELP, RESOURCE_DATAVAULT_CACHE_TTL, RESOURCE_DATAVAULT_CACHE_TTL__HELP, RESOURCE_DATAVAULT_CACHING_KIND, RESOURCE_DATAVAULT_CACHING_KIND__HELP
 from orangecontrib.hxl.widgets.mixin import HXLWidgetFeedbackMixin
 from orangecontrib.hxl.widgets.utils import hash_intentionaly_weak
 
@@ -43,12 +43,15 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
     category = "Orange3-HXLvisualETL"
     keywords = ["widget", "data"]
     want_main_area = False
-    resizing_enabled = True
+    resizing_enabled = False
 
     res_alias = Setting("", schema_only=True)
     res_hash = Setting("", schema_only=True)
     res_cache_kind = Setting("", schema_only=True)
     res_cache_ttl = Setting("", schema_only=True)
+    res_check_mimetypes = Setting("", schema_only=True)
+    res_check_havestring = Setting("", schema_only=True)
+    res_check_nothavestring = Setting("", schema_only=True)
     ui_pro = Setting(False)
     source_uri_main = Setting("", schema_only=True)
     source_uri_alt = Setting("", schema_only=True)
@@ -114,12 +117,14 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
 
     def _init_ui(self):
 
-        self.controlArea.setSizePolicy(Policy.Expanding, Policy.Fixed)
+        self.controlArea.setMinimumWidth(900)
+
+        #self.controlArea.setSizePolicy(Policy.Expanding, Policy.Fixed)
 
         self.action_box = gui.widgetBox(
             self.controlArea, "Actions")
 
-        self.action_box.setSizePolicy(Policy.Expanding, Policy.Fixed)
+        #self.action_box.setSizePolicy(Policy.Expanding, Policy.Fixed)
 
         # self.action_p1_box = gui.widgetBox(
         #     self.action_box, False, Qt.Horizontal)
@@ -148,28 +153,49 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
             callback=self._init_ui_refresh)
 
         self.main_uri_box = gui.lineEdit(
-            self.action_box, self, "source_uri_main", box="Remote URI of main source", callback=self.commit)
+            self.action_box, self, "source_uri_main",
+            orientation=Qt.Horizontal,
+            label="URL of source",
+            callback=None)
+
+        gui.separator(self.action_box)
 
         self.action_p2_box = gui.vBox(
             self.action_box)
         self.action_p2_box.hide()
 
-        self.res_alias_box = gui.lineEdit(
-            self.action_p2_box, self, "res_alias", box="Friendly alias (optional)")
-
         self.alt_uri_box = gui.lineEdit(
-            self.action_p2_box, self, "source_uri_alt", box="Remote URI, backup alternative 1", callback=self.commit)
+            self.action_p2_box, self, "source_uri_alt",
+            label="URI Failback 1",
+            orientation=Qt.Horizontal,
+            callback=None)
+
+        self.alt_uri_box.setToolTip(RESOUCE_URI_FALLBACK__HELP)
+
+        # alt_uri_box_policy = self.alt_uri_box
+        # alt_uri_box_policy.setHorizontalPolicy(Policy.Expanding)
+        # self.alt_uri_box.setSizePolicy(alt_uri_box_policy)
 
         self.alt2_uri_box = gui.lineEdit(
-            self.action_p2_box, self, "source_uri_alt2", box="Remote URI, backup alternative 2", callback=self.commit)
+            self.action_p2_box, self, "source_uri_alt2",
+            orientation=Qt.Horizontal,
+            label="URI Failback 2", callback=None)
 
-        gui.separator(self.controlArea)
-        self.optionsBox = gui.widgetBox(self.controlArea, "Options")
+        self.alt2_uri_box.setToolTip(RESOUCE_URI_FALLBACK__HELP)
 
-        self.optionsBox.setSizePolicy(Policy.Expanding, Policy.Fixed)
+        self.res_alias_box = gui.lineEdit(
+            self.action_p2_box, self, "res_alias",
+            orientation=Qt.Horizontal, label="Alias (used as hash reference)")
+
+        self.res_alias_box.setToolTip(RESOUCE_ALIAS__HELP)
 
         gui.button(
-            self.optionsBox, self, "(Re)Download", callback=self.commit_forced)
+            self.action_box, self, "(Re)Download", callback=self.commit_forced)
+
+        # gui.separator(self.controlArea)
+        #self.optionsBox = gui.widgetBox(self.controlArea, "Options")
+
+        #self.optionsBox.setSizePolicy(Policy.Expanding, Policy.Fixed)
 
         # self.res_hash_box.setText('teste')
 
@@ -272,9 +298,16 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
         self.Outputs.fileraw.send(self.fileraw)
 
     def commit_forced(self):
+        if not self.source_uri_main or len(self.source_uri_main) < 10:
+            QMessageBox.warning(
+                self,
+                "Remote URI of main source",
+                "Please define a value before forcing (re)download")
+            return None
+
         self.commit(forced=True)
         # self.Warning.primary_source_fail()
-        pass
+        # pass
 
     def send_report(self):
         """send_report"""

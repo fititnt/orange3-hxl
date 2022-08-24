@@ -69,7 +69,21 @@ RESOURCE_DATAVAULT_CACHE_TTL = {
     # '': 0,
 }
 
-# HTTP status, how to react ___________________________________________________
+RESOUCE_ALIAS__HELP = """
+Alias can be used as mnemonic reference (example "urn:data:cod:ab:ago?geojson"
+instead of "http://my-long-url.org/(...)iso3=AGO&format=geojson") to replace
+the URL of source as reference for internal hashing. This allow reuse of
+Orange workflow file and local caching.
+"""
+
+RESOUCE_URI_FALLBACK__HELP = """
+Fallback URIs will be used if main source is offline do not pass vality checks.
+"""
+
+# Mimetypes _________________________________________________________________
+# @see https://stackoverflow.com/questions/4212861/what-is-a-correct-mime-type-for-docx-pptx-etc
+
+# HTTP status, how to react _________________________________________________
 # for already locally cached resource, response code like this means erase
 # local caches compatible with how sensitive content was marked initially
 HTTP_STATUS_HARDFAIL = [
