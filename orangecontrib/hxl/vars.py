@@ -16,6 +16,16 @@ INFIX_INPUT_RAWTRANSFILE = 'transformedinput'
 INFIX_INPUT_RAWUNCOMPFILE = 'unzipedinput'
 INFIX_INPUT_RAWTEMP = 'inputtemp'
 
+DATAVAULT_TEMP = os.environ.get(
+    'DATAVAULT_TEMP',
+    DATAVAULT_BASE + '/' + INFIX_INPUT_RAWTEMP
+)
+
+DATAVAULT_TEMP_SENSITIVE = os.environ.get(
+    'DATAVAULT_TEMP_SENSITIVE',
+    DATAVAULT_TEMP
+)
+
 # Requests via API; identification __________________________________________
 # @see https://www.mediawiki.org/wiki/API:Etiquette
 # ini_set('user_agent', 'MyCoolTool/1.1 (https://example.org/MyCoolTool/; MyCoolTool@example.org) UsedBaseLibrary/1.4');

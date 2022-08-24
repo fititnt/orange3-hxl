@@ -1,13 +1,12 @@
 
 from abc import ABC, abstractmethod
-from ctypes import Union
 from dataclasses import dataclass
 import os
 from pathlib import Path
 from genericpath import exists, isdir, isfile
 from re import Pattern
 import re
-from typing import Type
+from typing import Tuple, Type, Union
 
 import requests
 
@@ -16,7 +15,7 @@ from orangewidget.utils.signals import summarize, PartialSummary
 from Orange.widgets.utils.state_summary import format_summary_details, \
     format_multiple_summaries
 from AnyQt.QtCore import Qt
-from orangecontrib.hxl.vars import DATAVAULT_BASE, INFIX_INPUT_RAWFILE, INFIX_INPUT_RAWTRANSFILE, INFIX_INPUT_RAWUNCOMPFILE
+from orangecontrib.hxl.vars import DATAVAULT_BASE, DATAVAULT_TEMP, DATAVAULT_TEMP_SENSITIVE, INFIX_INPUT_RAWFILE, INFIX_INPUT_RAWTEMP, INFIX_INPUT_RAWTRANSFILE, INFIX_INPUT_RAWUNCOMPFILE
 
 from orangecontrib.hxl.widgets.utils import bytes_to_human_readable, file_or_path_raw_metadata, string_to_list
 
@@ -38,10 +37,14 @@ class DataVault:
     unzipedinput: str = INFIX_INPUT_RAWUNCOMPFILE
     # transformedinput: str = 'transformedinput'
     transformedinput: str = INFIX_INPUT_RAWTRANSFILE
+    _temp: str = None
+    _temp_sensitive: str = None
 
     def __init__(self):
         # self.default_data_vault = f'{Path.home()}/.orange3data'
         self.default_data_vault = DATAVAULT_BASE
+        self._temp = DATAVAULT_TEMP
+        self._temp_sensitive = DATAVAULT_TEMP_SENSITIVE
 
     def initialize(self):
         if not exists(self.default_data_vault):
@@ -49,9 +52,17 @@ class DataVault:
             os.makedirs(self.default_data_vault + '/' + self.entrypoint)
             os.makedirs(self.default_data_vault + '/' + self.unzipedinput)
             os.makedirs(self.default_data_vault + '/' + self.transformedinput)
+            os.makedirs(self.default_data_vault + '/' + self.tempbase)
+        if not exists(self._temp):
+            os.makedirs(self._temp)
+        if not exists(self._temp_sensitive):
+            os.makedirs(self._temp_sensitive)
 
     def is_initialized(self):
-        return exists(self.default_data_vault)
+        if exists(self.default_data_vault) and exists(self._temp) and \
+                exists(self._temp_sensitive):
+            return True
+        return False
 
     def download_resource(
         self,
@@ -59,19 +70,25 @@ class DataVault:
         res_hash: str,
         res_alias: str = None,
         use_cache: bool = True,
-        ttl: int = None
-    ):
+        ttl: int = None,
+        validator: Type['ValidationCheckResource'] = None
+    ) -> Tuple[str, bool, str]:
         if not self.is_initialized():
             raise RuntimeError('Not initialized')
 
+        is_valid = True
+        info = ''
+
         base = self.default_data_vault + '/' + self.entrypoint + '/' + res_hash
         fullname = base + '/' + res_hash
+        fullname_temp = self._temp + res_hash
         if not exists(base):
             os.makedirs(base)
 
         if exists(fullname):
             if use_cache is True:
-                return fullname
+                log.exception('download_resource already cached')
+                return fullname, is_valid, 'Using cache'
             if ttl is not None:
                 # @TODO implement this part
                 pass
@@ -80,9 +97,16 @@ class DataVault:
         r = requests.get(source_uri, allow_redirects=True)
         # @TODO make checks if source is correct, not error, etc
 
-        open(fullname, 'wb').write(r.content)
+        if validator is not None:
+            log.exception('download_resource validator...')
+            open(fullname_temp, 'wb').write(r.content)
+            is_valid, info = validator.file_valid_check(fullname_temp)
+            log.exception([is_valid, info])
+        else:
+            log.exception('download_resource validator skiped')
+            open(fullname, 'wb').write(r.content)
 
-        return fullname
+        return fullname, is_valid, info
 
     @staticmethod
     def resource_path(
@@ -351,43 +375,73 @@ class FileRAWCollection(ResourceRAW):
         return None
 
 
-@dataclass
 class ValidationCheckResource:
     """Dataclass to envelope valid checks to check downloaded resources
 
     It's quite rudimentar, but can work for early checks to abort operations
     """
-    res_valid_mimetypes: list = None
-    res_valid_havestring: list = None
-    res_valid_nothavestring: list = None
+    _res_valid_mimetypes: list = None
+    _res_valid_havestring: list = None
+    _res_valid_nothavestring: list = None
 
-    def __init__(
-        self,
-        res_valid_mimetypes: Union[list, str],
-        res_valid_havestring: Union[list, str],
-        res_valid_nothavestring: Union[list, str],
-    ) -> None:
-        if res_valid_mimetypes:
-            if isinstance(res_valid_mimetypes, str):
-                res_valid_mimetypes = string_to_list(res_valid_mimetypes, '|')
-            self.res_valid_mimetypes = res_valid_mimetypes
+    # def __init__(
+    #     self,
+    #     res_valid_mimetypes: Union[list, str],
+    #     res_valid_havestring: Union[list, str],
+    #     res_valid_nothavestring: Union[list, str],
+    # ) -> None:
+    #     if res_valid_mimetypes:
+    #         self.res_valid_mimetypes = res_valid_mimetypes
+    #         # if isinstance(res_valid_mimetypes, str):
+    #         #     res_valid_mimetypes = string_to_list(res_valid_mimetypes, '|')
+    #         # self.res_valid_mimetypes = res_valid_mimetypes
 
-        if res_valid_havestring:
-            if isinstance(res_valid_havestring, str):
-                res_valid_havestring = string_to_list(
-                    res_valid_havestring, '|')
-            self.res_valid_havestring = res_valid_havestring
+    #     if res_valid_havestring:
+    #         # if isinstance(res_valid_havestring, str):
+    #         #     res_valid_havestring = string_to_list(
+    #         #         res_valid_havestring, '|')
+    #         self.res_valid_havestring = res_valid_havestring
 
-        if res_valid_nothavestring:
-            if isinstance(res_valid_nothavestring, str):
-                res_valid_nothavestring = string_to_list(
-                    res_valid_nothavestring, '|')
-            self.res_valid_nothavestring = res_valid_nothavestring
+    #     if res_valid_nothavestring:
+    #         # if isinstance(res_valid_nothavestring, str):
+    #         #     res_valid_nothavestring = string_to_list(
+    #         #         res_valid_nothavestring, '|')
+    #         self.res_valid_nothavestring = res_valid_nothavestring
+
+    @property
+    def res_valid_mimetypes(self):
+        return self._res_valid_mimetypes
+
+    @res_valid_mimetypes.setter
+    def res_valid_mimetypes(self, value: Union[list, str]) -> None:
+        if isinstance(value, str):
+            value = string_to_list(value, '|')
+        self._res_valid_mimetypes = value
+
+    @property
+    def res_valid_havestring(self):
+        return self._res_valid_havestring
+
+    @res_valid_havestring.setter
+    def res_valid_havestring(self, value: Union[list, str]) -> None:
+        if isinstance(value, str):
+            value = string_to_list(value, '|')
+        self._res_valid_havestring = value
+
+    @property
+    def res_valid_nothavestring(self):
+        return self._res_valid_nothavestring
+
+    @res_valid_nothavestring.setter
+    def res_valid_nothavestring(self, value: Union[list, str]) -> None:
+        if isinstance(value, str):
+            value = string_to_list(value, '|')
+        self._res_valid_nothavestring = value
 
     def file_valid_check(
         self,
         file_path: str
-    ) -> tuple(bool, str):
+    ) -> Tuple[bool, str]:
 
         is_valid = False
         is_valid_havetext = None
@@ -395,9 +449,9 @@ class ValidationCheckResource:
         is_valid_mimetype = None
         info = []
 
-        mimetypes: self.res_valid_mimetypes
-        havetext: self.res_valid_havestring
-        nothavetext: self.res_valid_nothavestring
+        mimetypes = self.res_valid_mimetypes
+        havetext = self.res_valid_havestring
+        nothavetext = self.res_valid_nothavestring
 
         # Abort early for obvious wrong fail.
         if not Path(file_path).is_file():

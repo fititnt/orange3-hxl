@@ -45,6 +45,10 @@ DATA_FILES = [
 
 INSTALL_REQUIRES = [
     'Orange3',
+    # Used for mimetype checks . Pretty basic, likely to already be installed
+    'python-magic',
+    # Also pretty basic for fetch fetch data
+    'requests',
 ]
 
 ENTRY_POINTS = {

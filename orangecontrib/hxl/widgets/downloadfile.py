@@ -19,7 +19,7 @@ from AnyQt.QtWidgets import \
 from functools import reduce, partial
 from Orange.widgets.utils.concurrent import ConcurrentWidgetMixin, TaskState
 
-from orangecontrib.hxl.base import FileRAW
+from orangecontrib.hxl.base import FileRAW, ValidationCheckResource
 from orangecontrib.hxl.vars import RESOUCE_ALIAS__HELP, RESOUCE_URI_FALLBACK__HELP, RESOUCE_VALIDATE_HAVESTRING__PLACEHOLDER, RESOUCE_VALIDATE_MIMETYPES__PLACEHOLDER, RESOUCE_VALIDATE_NOTHAVESTRING__PLACEHOLDER, RESOURCE_DATAVAULT_CACHE_TTL, RESOURCE_DATAVAULT_CACHE_TTL__HELP, RESOURCE_DATAVAULT_CACHING_KIND, RESOURCE_DATAVAULT_CACHING_KIND__HELP
 from orangecontrib.hxl.widgets.mixin import HXLWidgetFeedbackMixin
 from orangecontrib.hxl.widgets.utils import hash_intentionaly_weak
@@ -44,6 +44,7 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
     keywords = ["widget", "data"]
     want_main_area = False
     resizing_enabled = False
+    res_validator: ValidationCheckResource
 
     res_alias = Setting("", schema_only=True)
     res_hash = Setting("", schema_only=True)
@@ -77,7 +78,16 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
     class Warning(OWWidget.Warning):
         """Warning"""
         warning = Msg("My warning!")
-        primary_source_fail = Msg("Primary source failed, using backup")
+        # fallback_2_failed = Msg("Fallback 2 failed")
+
+    class Information(OWWidget.Information):
+        primary_source_failed = Msg("Primary source failed {}")
+        fallback_1_failed = Msg("Fallback 1 failed {}")
+        fallback_2_failed = Msg("Fallback 2 failed {}")
+
+    class Error(OWWidget.Error):
+        all_sources_failed = \
+            Msg("Primary sources and fallbacks (if any) failed")
 
     # class Error(OWWidget.Error):
     #     file_not_found = Msg("No source and altenatives ")
@@ -91,6 +101,7 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
 
         self.vault = DataVault()
         self.fileraw = FileRAW()
+        self.res_validator = ValidationCheckResource()
 
         self._init_ui()
 
@@ -252,20 +263,23 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
     def _init_ui_refresh(self):
         if self.ui_pro:
             self.res_alias_box.setDisabled(False)
-            # self.res_alias_box.show()
             self.alt_uri_box.setDisabled(False)
-            # self.alt_uri_box.show()
             self.alt2_uri_box.setDisabled(False)
-            # self.alt2_uri_box.show()
             self.action_p2_box.show()
         else:
             self.res_alias_box.setDisabled(True)
             # self.res_alias_box.hide()
             self.alt_uri_box.setDisabled(True)
-            # self.alt_uri_box.hide()
             self.alt2_uri_box.setDisabled(True)
-            # self.alt2_uri_box.hide()
             self.action_p2_box.hide()
+
+        if self.res_valid_mimetypes:
+            self.res_validator.res_valid_mimetypes = self.res_valid_mimetypes
+        if self.res_valid_havestring:
+            self.res_validator.res_valid_havestring = self.res_valid_havestring
+        if self.res_valid_nothavestring:
+            self.res_validator.res_valid_havestring = \
+                self.res_valid_nothavestring
 
     # @gui.deferred
     # def commit(self) -> None:
@@ -282,6 +296,8 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
         # _hash_refs_b = self.main_uri_box.text()
         res_alias = self.res_alias_box.text()
         res_uri = self.main_uri_box.text()
+        res_uri_alt = self.alt_uri_box.text()
+        res_uri_alt2 = self.alt2_uri_box.text()
         res_hash = str(hash_intentionaly_weak(res_uri))
         # if _hash_refs_a:
         #     res_hash = str(hash_intentionaly_weak(_hash_refs_a))
@@ -293,8 +309,39 @@ class HXLDownloadFile(OWWidget, HXLWidgetFeedbackMixin):
         #     self.infoa.setText("_hash_refs_b " + res_hash)
         #     self.res_hash_box.setText(res_hash)
 
-        result = self.vault.download_resource(
-            res_uri, res_hash, res_alias, use_cache=True)
+        # result = self.vault.download_resource(
+        #     res_uri, res_hash, res_alias, use_cache=True,
+        #     validator = self.res_validator)
+        fullname, is_valid, info = self.vault.download_resource(
+            res_uri, res_hash, res_alias, use_cache=True,
+            validator=self.res_validator)
+
+        if is_valid is not True:
+            self.Information.primary_source_failed(info)
+            if res_uri_alt:
+                fullname, is_valid, info = self.vault.download_resource(
+                    res_uri_alt, res_hash, res_alias, use_cache=True,
+                    validator=self.res_validator)
+                if is_valid is not True:
+                    self.Information.fallback_1_failed(info)
+            if is_valid is not True and res_uri_alt2:
+                fullname, is_valid, info = self.vault.download_resource(
+                    res_uri_alt2, res_hash, res_alias, use_cache=True,
+                    validator=self.res_validator)
+                if is_valid is not True:
+                    self.Information.fallback_2_failed(info)
+
+        if is_valid is not True:
+            self.Error.all_sources_failed()
+            self.fileraw = None
+            return None
+        else:
+            self.Information.primary_source_failed.clear()
+            self.Information.fallback_1_failed.clear()
+            self.Information.fallback_2_failed.clear()
+            self.Error.all_sources_failed.clear()
+            if self.fileraw is None:
+                self.fileraw = FileRAW()
 
         # if forced:
         #     result = self.vault.download_resource(
