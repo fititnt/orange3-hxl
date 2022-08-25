@@ -45,53 +45,14 @@ ORANGECLI_USEXVFB="${ORANGECLI_USEXVFB-""}"
 # as command line and as envoriment variable
 ORANGECLI_WORKFLOW="${ORANGECLI_WORKFLOW-$1}"
 ORANGECLI_OUTFILE1="${ORANGECLI_OUTFILE1-$2}"
+ORANGECLI_OUTFILE2="${ORANGECLI_OUTFILE2-$3}"
+ORANGECLI_OUTFILE3="${ORANGECLI_OUTFILE3-$4}"
 
 # green=$(tput setaf 2)
 # blue=$(tput setaf 2)
 # normal=$(tput sgr0)
 
 #### Functions _________________________________________________________________
-
-#######################################
-# Main event loop
-#
-# Globals:
-#   ORANGECLI_USEXVFB
-# Arguments:
-#   None
-# Outputs:
-#   Informational messages
-#######################################
-main_loop() {
-  pid=""
-  echo "main_loop START"
-
-  if [ -n "$ORANGECLI_USEXVFB" ]; then
-    # echo "ORANGECLI_USEXVFB if..."
-    # pid=$(run_orange_via_xvfb)
-    xvfb-run orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
-    pid=$!
-  # elif [ -n "$ORANGECLI_USESOMETINGELSE" ]; then
-  #   echo "here if needs to run another strategy"
-  else
-    orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
-    pid=$!
-  fi
-
-  echo "waiting for [$ORANGECLI_RUNTIME]"
-  sleep "$ORANGECLI_RUNTIME"
-
-
-  # all strategies would try to kill the $pid
-  kill "$pid" || true
-
-  if [ -n "$ORANGECLI_USEXVFB" ]; then
-    pkill Xvfb || true
-    echo "Tip: previous message like 'Did the X11 server die?' can be ignored"
-  fi
-
-  echo "main_loop END"
-}
 
 #######################################
 # Print user help
@@ -103,9 +64,10 @@ main_loop() {
 # Outputs:
 #   None
 #######################################
-print_help() {
+_print_help() {
   _program="$0"
-  echo "usage: [ENVS=val] ${_program} [workflow_file] [outfile_1]"
+  echo "usage: [ENVS=val] ${_program} [workflow_file] [outfile_1] [outfile_2] \
+[outfile_3]"
   echo ""
   echo "positional arguments:"
   echo "  workflow_file         Path to Orange Workflow file."
@@ -140,6 +102,152 @@ print_help() {
   echo ""
   echo "   ORANGECLI_TIMEOUT=10 ORANGECLI_TEARDOWN=2 \\"
   echo "     ${_program} path/to/fast-workflow.ows path/to/result/output_1.xlsx"
+}
+
+#######################################
+# Main event loop
+#
+# Globals:
+#   ORANGECLI_WORKFLOW
+#   ORANGECLI_OUTFILE1
+#   ORANGECLI_OUTFILE2
+#   ORANGECLI_OUTFILE3
+#   ORANGECLI_RUNTIME
+#   ORANGECLI_TIMEOUT
+#   ORANGECLI_USEXVFB
+# Arguments:
+#   None
+# Outputs:
+#   Informational messages
+#######################################
+main_loop() {
+  orange_pid=""
+
+  runtime=$(($(date +%s) + ORANGECLI_RUNTIME)) # Calculate end time.
+  timeout=$(($(date +%s) + ORANGECLI_TIMEOUT)) # Calculate end time.
+
+  echo "main_loop START"
+
+  status_quo_old=$(main_test_outfiles_status_quo "$ORANGECLI_OUTFILE1" "$ORANGECLI_OUTFILE2" "$ORANGECLI_OUTFILE3")
+
+  if [ -n "$ORANGECLI_USEXVFB" ]; then
+    xvfb-run orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
+    orange_pid=$!
+  # elif [ -n "$ORANGECLI_USESOMETINGELSE" ]; then
+  #   echo "here if needs to run another strategy"
+  else
+    orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
+    orange_pid=$!
+  fi
+
+  status_quo_changes="$((0))"
+  # While (current epoch is less than maximum timeout) AND (orange_pid is alive)
+  while [ "$(date +%s)" -lt "$timeout" ] && ps -p $orange_pid >/dev/null; do
+    now=$(date +%s) # Timenow
+
+    if [ -n "$ORANGECLI_DEBUG" ]; then
+      echo "Loop ...now     $now"
+      echo "Loop ...runtime $runtime"
+      echo "Loop ...timeout $timeout"
+      echo "Loop ...ORANGECLI_OUTFILE1 $ORANGECLI_OUTFILE1"
+      echo "Loop ...ORANGECLI_OUTFILE2 $ORANGECLI_OUTFILE2"
+      echo "Loop ...ORANGECLI_OUTFILE3 $ORANGECLI_OUTFILE3"
+    fi
+
+    status_quo=$(main_test_outfiles_status_quo "$ORANGECLI_OUTFILE1" "$ORANGECLI_OUTFILE2" "$ORANGECLI_OUTFILE3")
+    # echo "Loop ...status_quo $status_quo"
+    if [ "$status_quo_old" != "$status_quo" ]; then
+      status_quo_changes="$((status_quo_changes + 1))"
+      echo "    outfiles status quo changed [$status_quo_changes] times"
+      echo "    status_quo_old $status_quo_old"
+      echo "    status_quo $status_quo"
+      status_quo_old="$status_quo"
+    fi
+
+    if ps -p $orange_pid >/dev/null; then
+      echo "$orange_pid is running"
+      # Do something knowing the pid exists, i.e. the process with $PID is running
+    fi
+
+    # wait # for sleep
+    sleep 1
+  done
+
+  # echo "waiting for [$ORANGECLI_RUNTIME]"
+  # sleep "$ORANGECLI_RUNTIME"
+
+  # Kill if $orange_pid still alive
+  if ps -p $orange_pid >/dev/null; then
+    kill "$orange_pid"
+  fi
+
+  # all strategies would try to kill the $orange_pid
+  kill "$orange_pid" || true
+
+  if [ -n "$ORANGECLI_USEXVFB" ]; then
+    pkill Xvfb || true
+    echo "Tip: previous message like 'Did the X11 server die?' can be ignored"
+  fi
+
+  echo "main_loop END"
+}
+
+#######################################
+# Print user help
+#
+# Globals:
+#   None
+# Arguments:
+#   outfile_1
+#   outfile_2
+#   outfile_3
+# Outputs:
+#   fingerprint
+#######################################
+main_test_outfiles_status_quo() {
+  outfile_1="${1-''}"
+  outfile_2="${2-''}"
+  outfile_3="${3-''}"
+
+  # stat path/file.ext returns at least modifiation time and size, but syntax
+  # varies by operational system. Since we want modifiation time
+  # Not just hash of the content, we will just hash the entire result of
+  # stat path/file.ext
+
+  fingerprint=""
+
+  if [ -z "$outfile_1" ]; then
+    fingerprint="outfile_1:Undefined"
+  elif [ -f "$outfile_1" ]; then
+    _stat_info=$(stat "$outfile_1" | tr -dc '[:print:]')
+    _hashed=$(echo "$_stat_info" | md5sum | cut -d' ' -f1)
+    # _size=$(stat -c %s -- "$outfile_1")
+    # _mtime=$(stat -c %s -- "$outfile_1")
+    fingerprint="outfile_1:${_hashed}"
+  else
+    fingerprint="outfile_1:NotExist"
+  fi
+
+  if [ -z "$outfile_2" ]; then
+    fingerprint="${fingerprint}|outfile_2:Undefined"
+  elif [ -f "$outfile_2" ]; then
+    _stat_info=$(stat "$outfile_2" | tr -dc '[:print:]')
+    _hashed=$(echo "$_stat_info" | md5sum | cut -d' ' -f1)
+    fingerprint="${fingerprint}|outfile_2:${_hashed}"
+  else
+    fingerprint="${fingerprint}|outfile_2:NotExist"
+  fi
+
+  if [ -z "$outfile_3" ]; then
+    fingerprint="${fingerprint}|outfile_2:Undefined"
+  elif [ -f "$outfile_3" ]; then
+    _stat_info=$(stat "$outfile_3" | tr -dc '[:print:]')
+    _hashed=$(echo "$_stat_info" | md5sum | cut -d' ' -f1)
+    fingerprint="${fingerprint}|outfile_3:${_hashed}"
+  else
+    fingerprint="${fingerprint}|outfile_3:NotExist"
+  fi
+  echo "$fingerprint"
 }
 
 #######################################
@@ -230,135 +338,6 @@ print_debug_context() {
   echo ""
 }
 
-# @TODO remove
-run_via_timeout() {
-  # echo "@TODO ${FUNCNAME[0]}"
-  set -x
-  orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
-  pid=$!
-  sleep "$ORANGECLI_RUNTIME"
-  kill "$pid"
-  set +x
-}
-
-# @TODO remove
-run_via_timeout_xvfb() {
-  # echo "@TODO ${FUNCNAME[0]}"
-  set -x
-
-  # Fix "xvfb-run: error: Xvfb failed to start" if last run was aborted
-  pkill Xvfb || true
-
-  xvfb-run orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
-  pid=$!
-
-  sleep "$ORANGECLI_RUNTIME"
-  kill "$pid"
-
-  # xvfb-run is killed, but Xvfb not. So we kill it here
-  pkill Xvfb || true
-
-  # @see https://unix.stackexchange.com/questions/291804/howto-terminate-xvfb-run-properly
-  # Note: safe to ignore
-  # The X11 connection broke (error 1). Did the X11 server die?
-
-  set +x
-  echo "Tip: any previous message like 'Did the X11 server die?' can be ignored"
-}
-
-#######################################
-# Run orange-canvas via command line and return PID
-#
-# Globals:
-#   ORANGECLI_WORKFLOW
-# Arguments:
-#   None
-# Outputs:
-#   pid        Process ID (that may need be killed)
-#######################################
-run_orange_simple() {
-  echo "run_orange_simple()"
-
-  # @TODO maybe implement ways to cli orange-canvas
-  orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
-  pid=$!
-  echo "$pid"
-}
-
-#######################################
-# run_orange_simple_teardown
-#
-# Globals:
-#   None
-# Arguments:
-#   pid        Process ID (that may need be killed)
-# Outputs:
-#   None
-#######################################
-run_orange_simple_teardown() {
-  pid="$1"
-  echo "run_orange_simple_teardown()"
-
-  kill "$pid" || true
-}
-
-#######################################
-# Run orange-canvas via command line and return PID. However, uses Xvfb
-#
-# Globals:
-#   ORANGECLI_WORKFLOW
-# Arguments:
-#   None
-# Outputs:
-#   pid        Process ID (that may need be killed)
-#######################################
-run_orange_via_xvfb() {
-  # echo "run_orange_via_xvfb()"
-  # Fix "xvfb-run: error: Xvfb failed to start" if last run was aborted
-  pkill Xvfb || true
-
-  xvfb-run orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
-  pid=$!
-  echo "$pid"
-}
-
-#######################################
-# If run_orange_via_xvfb is used, we need to clean up Xvfb
-#
-# Globals:
-#   None
-# Arguments:
-#   pid        Process ID (that may need be killed)
-# Outputs:
-#   None
-#######################################
-run_orange_via_xvfb_teardown() {
-  pid="$1"
-  echo "run_orange_via_xvfb_teardown()"
-
-  kill "$pid" || true
-  # xvfb-run is killed, but Xvfb not. So we kill it here
-  pkill Xvfb || true
-  echo "Tip: any previous message like 'Did the X11 server die?' can be ignored"
-}
-
-# #######################################
-# # Run orange-canvas via command line and return PID
-# #
-# # Globals:
-# #   ORANGECLI_WORKFLOW
-# # Arguments:
-# #   None
-# # Outputs:
-# #   pid        Process ID (that may need be killed)
-# #######################################
-# run_simple() {
-#   # @TODO maybe implement ways to cli orange-canvas
-#   orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
-#   pid=$!
-#   echo "$pid"
-# }
-
 #### Main ______________________________________________________________________
 
 ### Early messages . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -367,35 +346,21 @@ if [ -n "$ORANGECLI_DEBUG" ]; then
 fi
 
 if [ -z "$ORANGECLI_WORKFLOW" ] || [ "$ORANGECLI_WORKFLOW" = "-h" ] || [ "$ORANGECLI_WORKFLOW" = "--help" ]; then
-  print_help
+  _print_help
+  exit 1
+fi
+
+if [ -z "$ORANGECLI_WORKFLOW" ] || [ ! -f "$ORANGECLI_WORKFLOW" ]; then
+  echo "ERROR: ORANGECLI_WORKFLOW [$ORANGECLI_WORKFLOW] is not valid file"
+  exit 1
+fi
+
+if [ -n "$ORANGECLI_USEXVFB" ] && ! command -v xvfb-run >/dev/null 2>&1; then
+  echo "ERROR: ORANGECLI_USEXVFB enabled, but Xvfb not installed"
   exit 1
 fi
 
 main_loop
-exit 0
-
-# if [ -n "$ORANGECLI_USEXVFB" ]; then
-#   run_via_timeout_xvfb
-# else
-#   run_via_timeout
-# fi
-
-green=$(tput setaf 2)
-normal=$(tput sgr0)
-printf "%40s\n" "${green}$0 exiting without internal errors ${normal}"
-printf "%40s\n" "${green}$0 Please check the output to be sure ${normal}"
-exit 0
-
-# set -x
-# timeout "$ORANGECLI_RUNTIME" \
-#   orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW"
-# set +x
-set -x
-orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
-pid=$!
-sleep "$ORANGECLI_RUNTIME"
-kill "$pid"
-set +x
 
 # ./orange-canvas-cli.sh /workspace/git/EticaAI/lsf-orange-data-mining/orange-simple-test.temp.ows
 
