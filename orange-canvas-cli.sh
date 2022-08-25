@@ -26,6 +26,9 @@
 #       CREATED:  2022-08-24 21:59 UTC started. Based on orange-via-cli.py
 #      REVISION:  ---
 # ==============================================================================
+
+# the next line will stop on first error. However we do not use pipefail
+# since not availible on POSIX shell
 set -e
 
 #### Configurations ____________________________________________________________
@@ -43,7 +46,52 @@ ORANGECLI_USEXVFB="${ORANGECLI_USEXVFB-""}"
 ORANGECLI_WORKFLOW="${ORANGECLI_WORKFLOW-$1}"
 ORANGECLI_OUTFILE1="${ORANGECLI_OUTFILE1-$2}"
 
+# green=$(tput setaf 2)
+# blue=$(tput setaf 2)
+# normal=$(tput sgr0)
+
 #### Functions _________________________________________________________________
+
+#######################################
+# Main event loop
+#
+# Globals:
+#   ORANGECLI_USEXVFB
+# Arguments:
+#   None
+# Outputs:
+#   Informational messages
+#######################################
+main_loop() {
+  pid=""
+  echo "main_loop START"
+
+  if [ -n "$ORANGECLI_USEXVFB" ]; then
+    # echo "ORANGECLI_USEXVFB if..."
+    # pid=$(run_orange_via_xvfb)
+    xvfb-run orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
+    pid=$!
+  # elif [ -n "$ORANGECLI_USESOMETINGELSE" ]; then
+  #   echo "here if needs to run another strategy"
+  else
+    orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
+    pid=$!
+  fi
+
+  echo "waiting for [$ORANGECLI_RUNTIME]"
+  sleep "$ORANGECLI_RUNTIME"
+
+
+  # all strategies would try to kill the $pid
+  kill "$pid" || true
+
+  if [ -n "$ORANGECLI_USEXVFB" ]; then
+    pkill Xvfb || true
+    echo "Tip: previous message like 'Did the X11 server die?' can be ignored"
+  fi
+
+  echo "main_loop END"
+}
 
 #######################################
 # Print user help
@@ -63,7 +111,7 @@ print_help() {
   echo "  workflow_file         Path to Orange Workflow file."
   echo "  outfile_1             [Optional] Outfile to watch for changes"
   echo ""
-  echo "enviroment variables:"
+  echo "environment variables:"
   echo "  ORANGECLI_TIMEOUT     [Value: '${ORANGECLI_TIMEOUT}'] Maximum runtime."
   echo "                        Used if orange-canvas is taking too long or"
   echo "                        if we fail to detect finished with success"
@@ -114,6 +162,9 @@ print_debug_context() {
 
   printf "%40s\n" "${blue}"
   printf "\tprint_debug_context START\n"
+  echo "ORANGECLI_WORKFLOW='$ORANGECLI_WORKFLOW'"
+  echo "ORANGECLI_OUTFILE1='$ORANGECLI_OUTFILE1'"
+  echo ""
   echo "ORANGECLI_DEBUG='$ORANGECLI_DEBUG'"
   echo "ORANGECLI_RUNTIME='$ORANGECLI_RUNTIME'"
   echo "ORANGECLI_TEARDOWN='$ORANGECLI_TEARDOWN'"
@@ -179,16 +230,7 @@ print_debug_context() {
   echo ""
 }
 
-#######################################
-# ...
-#
-# Globals:
-#   None
-# Arguments:
-#   None
-# Outputs:
-#   None
-#######################################
+# @TODO remove
 run_via_timeout() {
   # echo "@TODO ${FUNCNAME[0]}"
   set -x
@@ -199,25 +241,123 @@ run_via_timeout() {
   set +x
 }
 
+# @TODO remove
+run_via_timeout_xvfb() {
+  # echo "@TODO ${FUNCNAME[0]}"
+  set -x
+
+  # Fix "xvfb-run: error: Xvfb failed to start" if last run was aborted
+  pkill Xvfb || true
+
+  xvfb-run orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
+  pid=$!
+
+  sleep "$ORANGECLI_RUNTIME"
+  kill "$pid"
+
+  # xvfb-run is killed, but Xvfb not. So we kill it here
+  pkill Xvfb || true
+
+  # @see https://unix.stackexchange.com/questions/291804/howto-terminate-xvfb-run-properly
+  # Note: safe to ignore
+  # The X11 connection broke (error 1). Did the X11 server die?
+
+  set +x
+  echo "Tip: any previous message like 'Did the X11 server die?' can be ignored"
+}
+
 #######################################
-# ...
+# Run orange-canvas via command line and return PID
+#
+# Globals:
+#   ORANGECLI_WORKFLOW
+# Arguments:
+#   None
+# Outputs:
+#   pid        Process ID (that may need be killed)
+#######################################
+run_orange_simple() {
+  echo "run_orange_simple()"
+
+  # @TODO maybe implement ways to cli orange-canvas
+  orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
+  pid=$!
+  echo "$pid"
+}
+
+#######################################
+# run_orange_simple_teardown
 #
 # Globals:
 #   None
 # Arguments:
-#   None
+#   pid        Process ID (that may need be killed)
 # Outputs:
 #   None
 #######################################
-run_via_timeout_xvfb() {
-  # echo "@TODO ${FUNCNAME[0]}"
-  set -x
+run_orange_simple_teardown() {
+  pid="$1"
+  echo "run_orange_simple_teardown()"
+
+  kill "$pid" || true
+}
+
+#######################################
+# Run orange-canvas via command line and return PID. However, uses Xvfb
+#
+# Globals:
+#   ORANGECLI_WORKFLOW
+# Arguments:
+#   None
+# Outputs:
+#   pid        Process ID (that may need be killed)
+#######################################
+run_orange_via_xvfb() {
+  # echo "run_orange_via_xvfb()"
+  # Fix "xvfb-run: error: Xvfb failed to start" if last run was aborted
+  pkill Xvfb || true
+
   xvfb-run orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
   pid=$!
-  sleep "$ORANGECLI_RUNTIME"
-  kill "$pid"
-  set +x
+  echo "$pid"
 }
+
+#######################################
+# If run_orange_via_xvfb is used, we need to clean up Xvfb
+#
+# Globals:
+#   None
+# Arguments:
+#   pid        Process ID (that may need be killed)
+# Outputs:
+#   None
+#######################################
+run_orange_via_xvfb_teardown() {
+  pid="$1"
+  echo "run_orange_via_xvfb_teardown()"
+
+  kill "$pid" || true
+  # xvfb-run is killed, but Xvfb not. So we kill it here
+  pkill Xvfb || true
+  echo "Tip: any previous message like 'Did the X11 server die?' can be ignored"
+}
+
+# #######################################
+# # Run orange-canvas via command line and return PID
+# #
+# # Globals:
+# #   ORANGECLI_WORKFLOW
+# # Arguments:
+# #   None
+# # Outputs:
+# #   pid        Process ID (that may need be killed)
+# #######################################
+# run_simple() {
+#   # @TODO maybe implement ways to cli orange-canvas
+#   orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
+#   pid=$!
+#   echo "$pid"
+# }
 
 #### Main ______________________________________________________________________
 
@@ -231,18 +371,20 @@ if [ -z "$ORANGECLI_WORKFLOW" ] || [ "$ORANGECLI_WORKFLOW" = "-h" ] || [ "$ORANG
   exit 1
 fi
 
+main_loop
+exit 0
 
+# if [ -n "$ORANGECLI_USEXVFB" ]; then
+#   run_via_timeout_xvfb
+# else
+#   run_via_timeout
+# fi
 
-
-if [ -n "$ORANGECLI_USEXVFB" ]; then
-  run_via_timeout_xvfb
-else
-  run_via_timeout
-fi
-
-
-
-exit
+green=$(tput setaf 2)
+normal=$(tput sgr0)
+printf "%40s\n" "${green}$0 exiting without internal errors ${normal}"
+printf "%40s\n" "${green}$0 Please check the output to be sure ${normal}"
+exit 0
 
 # set -x
 # timeout "$ORANGECLI_RUNTIME" \
@@ -258,6 +400,7 @@ set +x
 # ./orange-canvas-cli.sh /workspace/git/EticaAI/lsf-orange-data-mining/orange-simple-test.temp.ows
 
 # ORANGECLI_DEBUG=1 ORANGECLI_USEXVFB=1 ./orange-canvas-cli.sh /workspace/git/EticaAI/lsf-orange-data-mining/orange-simple-test.temp.ows
+# ORANGECLI_DEBUG=1 ORANGECLI_USEXVFB=1 ./orange-canvas-cli.sh /workspace/git/EticaAI/lsf-orange-data-mining/orange-simple-test.temp.ows /workspace/git/EticaAI/lsf-orange-data-mining/999999/0/iris.csv
 
 #### Etc _______________________________________________________________________
 ## Discussions related to run orange via cli
