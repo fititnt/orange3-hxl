@@ -138,4 +138,33 @@ pip uninstall Orange3-HXLvisualETL orange3 Orange3-Geo Orange3-Timeseries orange
       https://proxy.hxlstandard.org/data.csv?dest=data_edit&filter01=cut&cut-skip-untagged01=on&strip-headers=on&force=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1NjSI2LaS3SqbgYc0HdD8oIb7lofGtiHgoKKATCpwVdY%2Fedit%23gid%3D1088874596
 
 @TODO CSV
+
+>>> orange-canvas-cli.sh
+
+# Whatever was exit status of main_loop(), we will leave unchanged.
+# However likely critical errors will returno non-zero result
+
+# ./orange-canvas-cli.sh /workspace/git/EticaAI/lsf-orange-data-mining/orange-simple-test.temp.ows
+
+# ORANGECLI_DEBUG=1 ORANGECLI_USEXVFB=1 ./orange-canvas-cli.sh /workspace/git/EticaAI/lsf-orange-data-mining/orange-simple-test.temp.ows
+# ORANGECLI_DEBUG=1 ORANGECLI_USEXVFB=1 ./orange-canvas-cli.sh /workspace/git/EticaAI/lsf-orange-data-mining/orange-simple-test.temp.ows /workspace/git/EticaAI/lsf-orange-data-mining/999999/0/iris.csv
+
+#### Etc _______________________________________________________________________
+## Discussions related to run orange via cli
+# @see https://github.com/biolab/orange3/issues/1341
+# @see https://github.com/biolab/orange3/issues/3874
+# @see https://github.com/biolab/orange3/issues/4910
+# @see https://github.com/biolab/orange3/pull/4966
+# @see https://github.com/biolab/orange3/issues/2525
+
+## Kill program after some time
+
+# @see https://unix.stackexchange.com/questions/483879/stop-kill-a-process-from-the-command-line-after-a-certain-amount-of-time
+
+## Xvfb related
+# @see https://unix.stackexchange.com/questions/512356/is-there-any-way-to-launch-gui-application-without-gui
+
+# @see https://discourse.nixos.org/t/running-qt-applications-with-xvfb-run/1696
+# @see https://stackoverflow.com/questions/13215120/how-do-i-make-python-qt-and-webkit-work-on-a-headless-server
+
 -->

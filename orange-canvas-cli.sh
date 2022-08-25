@@ -48,9 +48,14 @@ ORANGECLI_OUTFILE1="${ORANGECLI_OUTFILE1-$2}"
 ORANGECLI_OUTFILE2="${ORANGECLI_OUTFILE2-$3}"
 ORANGECLI_OUTFILE3="${ORANGECLI_OUTFILE3-$4}"
 
-# green=$(tput setaf 2)
-# blue=$(tput setaf 2)
-# normal=$(tput sgr0)
+#### Potential To Do's _________________________________________________________
+# @TODO implement ORANGECLI_LOGLEVEL to match orange orange-canvas --log-level
+# @TODO allow user configure some filepath (or maybe we print to stdout)
+#       the actual output of "orange-canvas path/to/workflow.ows"
+# @TODO test a bit more outside Linux. However, both Windows and Mac in theory
+#       should already work (however, ORANGECLI_USEXVFB=1 to hide the GUI
+#       may not work and would be easier to just customize this script to some
+#       non Xvfb + xvfb-run dependencies)
 
 #### Functions _________________________________________________________________
 
@@ -69,6 +74,15 @@ _print_help() {
   echo "usage: [ENVS=val] ${_program} [workflow_file] [outfile_1] [outfile_2] \
 [outfile_3]"
   echo ""
+  echo "summary:"
+  echo "  The ${_program} can be used to execute **already working workflows"
+  echo "  without user input** fully via command line. If you pass 1 to 3"
+  echo "  output files, it will watch for changes (size, modification time,"
+  echo "  etc) and use ORANGECLI_TEARDOWN as tolerance for total time without"
+  echo "  any new update. However, if you cant pass any output file, then"
+  echo "  set harcoded value to ORANGECLI_RUNTIME that will close the"
+  echo "  application"
+  echo ""
   echo "positional arguments:"
   echo "  workflow_file         Path to Orange Workflow file."
   echo "  outfile_1             [Optional] Outfile to watch for changes"
@@ -79,8 +93,11 @@ _print_help() {
   echo "                        if we fail to detect finished with success"
   echo "  ORANGECLI_TEARDOWN    [Value: '${ORANGECLI_TEARDOWN}'] additional delay"
   echo "                        if [outfile_1] is given and detection may"
-  echo "                        fail to consider that the file still being"
-  echo "                        written (or there is more outfiles)"
+  echo "                        fail to consider that the file is still being"
+  echo "                        written (or there are more outfiles). "
+  echo "                        Even for fast workflows, still recommended"
+  echo "                        not set this value lower than 2 (2 seconds)"
+  echo "                        to avoid file corruption."
   echo "  ORANGECLI_RUNTIME     [Value: '${ORANGECLI_RUNTIME}'] if [outfile_1]"
   echo "                        is not given, we always stop orange-canvas"
   echo "                        at this exact time."
@@ -123,12 +140,19 @@ _print_help() {
 main_loop() {
   orange_pid=""
 
+  initial_time=$(date +%s)                     # Timenow
   runtime=$(($(date +%s) + ORANGECLI_RUNTIME)) # Calculate end time.
   timeout=$(($(date +%s) + ORANGECLI_TIMEOUT)) # Calculate end time.
 
   echo "main_loop START"
 
-  status_quo_old=$(main_test_outfiles_status_quo "$ORANGECLI_OUTFILE1" "$ORANGECLI_OUTFILE2" "$ORANGECLI_OUTFILE3")
+  # @TODO: maybe mark this variable as empty if we can catch errors. For now
+  #        is used only to change the end message of main_loop()
+  is_okay="1"
+  # is_okay=""
+
+  status_quo_old=$(main_test_outfiles_status_quo \
+    "$ORANGECLI_OUTFILE1" "$ORANGECLI_OUTFILE2" "$ORANGECLI_OUTFILE3")
 
   if [ -n "$ORANGECLI_USEXVFB" ]; then
     xvfb-run orange-canvas --no-welcome --no-splash "$ORANGECLI_WORKFLOW" &
@@ -141,8 +165,18 @@ main_loop() {
   fi
 
   status_quo_changes="$((0))"
-  # While (current epoch is less than maximum timeout) AND (orange_pid is alive)
+  time_since_last_change="$((-1))"
+
+  # while block explained:
+  #       (current epoch is less than maximum timeout)
+  #          AND
+  #       (orange_pid is alive)
+  # If orange-canvas fail (example: critical error, or some feature
+  # allowing close itself after stop all actions) this code will
+  # still work.
   while [ "$(date +%s)" -lt "$timeout" ] && ps -p $orange_pid >/dev/null; do
+    diff=$(($(date +%s) - initial_time)) # Calculate end time.
+    echo "T${diff}    ${time_since_last_change}"
     now=$(date +%s) # Timenow
 
     if [ -n "$ORANGECLI_DEBUG" ]; then
@@ -154,46 +188,88 @@ main_loop() {
       echo "Loop ...ORANGECLI_OUTFILE3 $ORANGECLI_OUTFILE3"
     fi
 
-    status_quo=$(main_test_outfiles_status_quo "$ORANGECLI_OUTFILE1" "$ORANGECLI_OUTFILE2" "$ORANGECLI_OUTFILE3")
-    # echo "Loop ...status_quo $status_quo"
+    status_quo=$(main_test_outfiles_status_quo \
+      "$ORANGECLI_OUTFILE1" "$ORANGECLI_OUTFILE2" "$ORANGECLI_OUTFILE3")
+
+    # This block only checks for changes on output . . . . . . . . . . . . . . .
     if [ "$status_quo_old" != "$status_quo" ]; then
       status_quo_changes="$((status_quo_changes + 1))"
       echo "    outfiles status quo changed [$status_quo_changes] times"
-      echo "    status_quo_old $status_quo_old"
-      echo "    status_quo $status_quo"
+      echo "    previous time_since_last_change [$time_since_last_change]"
+      echo "    status_quo_old [[$status_quo_old]]"
+      echo "    status_quo     [[$status_quo]]"
       status_quo_old="$status_quo"
+      time_since_last_change="$((0))"
+    elif [ "$time_since_last_change" -gt "-1" ]; then
+      time_since_last_change="$((time_since_last_change + 1))"
+      if [ "$time_since_last_change" -gt "$ORANGECLI_TEARDOWN" ]; then
+        echo "INFO: time_since_last_change [$time_since_last_change] > \
+ORANGECLI_TEARDOWN [$ORANGECLI_TEARDOWN]"
+        echo "      Stoping now..."
+        is_okay="1"
+        break
+      fi
     fi
 
-    if ps -p $orange_pid >/dev/null; then
-      echo "$orange_pid is running"
-      # Do something knowing the pid exists, i.e. the process with $PID is running
-    fi
+    # This block only checks for changes on output . . . . . . . . . . . . . . .
+    if [ -z "$ORANGECLI_OUTFILE1" ] && [ "$diff" -gt "$ORANGECLI_RUNTIME" ]; then
+      echo "INFO: diff [$diff] > \
+ORANGECLI_RUNTIME [$ORANGECLI_RUNTIME]"
+      echo "      and not output files to check for changes"
+      echo "      We will assume it's time to stop without wait for"
+      echo "      ORANGECLI_TIMEOUT [$ORANGECLI_TIMEOUT]"
 
-    # wait # for sleep
+      # This is not really a perfect ok, but whatever. No sufficient context
+      # to check.
+      is_okay="1"
+      break
+    fi
     sleep 1
   done
 
-  # echo "waiting for [$ORANGECLI_RUNTIME]"
-  # sleep "$ORANGECLI_RUNTIME"
-
   # Kill if $orange_pid still alive
   if ps -p $orange_pid >/dev/null; then
+    echo "INFO: Stoping orange_pid [$orange_pid]"
     kill "$orange_pid"
+  else
+    echo "INFO: orange_pid [$orange_pid] already was not alive."
+    echo "      Not attempting to kill the process"
   fi
 
-  # all strategies would try to kill the $orange_pid
-  kill "$orange_pid" || true
+  # # all strategies would try to kill the $orange_pid
+  # kill "$orange_pid" || true
 
   if [ -n "$ORANGECLI_USEXVFB" ]; then
+    echo ""
+    echo "INFO: ORANGECLI_USEXVFB was enabled. Attempting now to stop any"
+    echo "      process named Xvfb"
     pkill Xvfb || true
-    echo "Tip: previous message like 'Did the X11 server die?' can be ignored"
+    echo "INFO: previous message like 'Did the X11 server die?' can be ignored"
+    echo ""
   fi
 
-  echo "main_loop END"
+  # Lets exist with 0 (to signal ok execution, even if we cannot 100% be sure)
+  # However, critical errors would return exit different than 0, so it still
+  # likely be usable on CI enviroments
+
+  red=$(tput setaf 1)
+  green=$(tput setaf 2)
+  normal=$(tput sgr0)
+
+  if [ -n "$is_okay" ]; then
+    printf "%40s\n" "${green}main_loop() (likely) successful run ${normal}"
+    printf "%40s\n" "${normal}Please check the output to be sure ${normal}"
+    exit 0
+  else
+    printf "%40s\n" "${red}main_loop() failed ${normal}"
+    exit 1
+  fi
 }
 
 #######################################
-# Print user help
+# Accept 3 arguments (can be empty) and try to create a fingerprint which can
+# be compared later for changes. It's like a poor's man inotify, which requires
+# an event loop
 #
 # Globals:
 #   None
@@ -214,38 +290,42 @@ main_test_outfiles_status_quo() {
   # Not just hash of the content, we will just hash the entire result of
   # stat path/file.ext
 
+  # md5sum dependency removed. _stat_info without linebreanks already
+
   fingerprint=""
 
   if [ -z "$outfile_1" ]; then
     fingerprint="outfile_1:Undefined"
   elif [ -f "$outfile_1" ]; then
-    _stat_info=$(stat "$outfile_1" | tr -dc '[:print:]')
-    _hashed=$(echo "$_stat_info" | md5sum | cut -d' ' -f1)
-    # _size=$(stat -c %s -- "$outfile_1")
-    # _mtime=$(stat -c %s -- "$outfile_1")
-    fingerprint="outfile_1:${_hashed}"
+    # _stat_info=$(stat "$outfile_1" | tr -dc '[:print:]')
+    _stat_info=$(stat "$outfile_1")
+    # _hashed=$(echo "$_stat_info" | md5sum | cut -d' ' -f1)
+    # fingerprint="outfile_1:${_hashed}"
+    fingerprint="outfile_1:${_stat_info}"
   else
     fingerprint="outfile_1:NotExist"
   fi
 
   if [ -z "$outfile_2" ]; then
-    fingerprint="${fingerprint}|outfile_2:Undefined"
+    fingerprint="${fingerprint}\n\noutfile_2:Undefined"
   elif [ -f "$outfile_2" ]; then
-    _stat_info=$(stat "$outfile_2" | tr -dc '[:print:]')
-    _hashed=$(echo "$_stat_info" | md5sum | cut -d' ' -f1)
-    fingerprint="${fingerprint}|outfile_2:${_hashed}"
+    # _stat_info=$(stat "$outfile_2" | tr -dc '[:print:]')
+    _stat_info=$(stat "$outfile_2")
+    # _hashed=$(echo "$_stat_info" | md5sum | cut -d' ' -f1)
+    fingerprint="${fingerprint}\n\noutfile_2:${_stat_info}"
   else
-    fingerprint="${fingerprint}|outfile_2:NotExist"
+    fingerprint="${fingerprint}\n\noutfile_2:NotExist"
   fi
 
   if [ -z "$outfile_3" ]; then
-    fingerprint="${fingerprint}|outfile_2:Undefined"
+    fingerprint="${fingerprint}\n\noutfile_2:Undefined"
   elif [ -f "$outfile_3" ]; then
-    _stat_info=$(stat "$outfile_3" | tr -dc '[:print:]')
-    _hashed=$(echo "$_stat_info" | md5sum | cut -d' ' -f1)
-    fingerprint="${fingerprint}|outfile_3:${_hashed}"
+    # _stat_info=$(stat "$outfile_3" | tr -dc '[:print:]')
+    _stat_info=$(stat "$outfile_3")
+    # _hashed=$(echo "$_stat_info" | md5sum | cut -d' ' -f1)
+    fingerprint="${fingerprint}\n\noutfile_3:${_stat_info}"
   else
-    fingerprint="${fingerprint}|outfile_3:NotExist"
+    fingerprint="${fingerprint}\n\noutfile_3:NotExist"
   fi
   echo "$fingerprint"
 }
@@ -256,7 +336,16 @@ main_test_outfiles_status_quo() {
 # debug.
 #
 # Globals:
-#   None
+#   ORANGECLI_DEBUG
+#   ORANGECLI_RUNTIME
+#   ORANGECLI_TEARDOWN
+#   ORANGECLI_TIMEOUT
+#   ORANGECLI_LOGLEVEL
+#   ORANGECLI_USEXVFB
+#   ORANGECLI_WORKFLOW
+#   ORANGECLI_OUTFILE1
+#   ORANGECLI_OUTFILE2
+#   ORANGECLI_OUTFILE3
 # Arguments:
 #   None
 # Outputs:
@@ -360,27 +449,11 @@ if [ -n "$ORANGECLI_USEXVFB" ] && ! command -v xvfb-run >/dev/null 2>&1; then
   exit 1
 fi
 
+# Here we start the main loop
 main_loop
 
-# ./orange-canvas-cli.sh /workspace/git/EticaAI/lsf-orange-data-mining/orange-simple-test.temp.ows
-
-# ORANGECLI_DEBUG=1 ORANGECLI_USEXVFB=1 ./orange-canvas-cli.sh /workspace/git/EticaAI/lsf-orange-data-mining/orange-simple-test.temp.ows
-# ORANGECLI_DEBUG=1 ORANGECLI_USEXVFB=1 ./orange-canvas-cli.sh /workspace/git/EticaAI/lsf-orange-data-mining/orange-simple-test.temp.ows /workspace/git/EticaAI/lsf-orange-data-mining/999999/0/iris.csv
-
-#### Etc _______________________________________________________________________
-## Discussions related to run orange via cli
-# @see https://github.com/biolab/orange3/issues/1341
-# @see https://github.com/biolab/orange3/issues/3874
-# @see https://github.com/biolab/orange3/issues/4910
-# @see https://github.com/biolab/orange3/pull/4966
-# @see https://github.com/biolab/orange3/issues/2525
-
-## Kill program after some time
-
-# @see https://unix.stackexchange.com/questions/483879/stop-kill-a-process-from-the-command-line-after-a-certain-amount-of-time
-
-## Xvfb related
-# @see https://unix.stackexchange.com/questions/512356/is-there-any-way-to-launch-gui-application-without-gui
-
-# @see https://discourse.nixos.org/t/running-qt-applications-with-xvfb-run/1696
-# @see https://stackoverflow.com/questions/13215120/how-do-i-make-python-qt-and-webkit-work-on-a-headless-server
+# main_loop() will (hopefully) already return correct exit status,
+# so this script could be used as quick reference for Continuous Integration
+# (Or use Orange3 via GitHub Actions use workflows files to make
+# data conversions, without require end users know too much about
+# Python scripting)
